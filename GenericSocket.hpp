@@ -20,6 +20,7 @@
 #define GENERIC_SOCKET_HPP
 
 #include <boost/asio.hpp>
+#include <boost/asio/error.hpp>
 #include <boost/asio/ssl.hpp>
 #include <cinttypes>
 #include <string>
@@ -61,7 +62,7 @@ public:
 			socket = NULL;
 			return err;
 		}
-		return boost::system::error_code(0);
+		return boost::system::error_code();
 	}
 	
 	inline boost::system::error_code ConnectSsl(Endpoint endpoint,
@@ -70,7 +71,6 @@ public:
 	inline void Close() {
 		if(socket) {
 			socket->cancel();
-			socket->close();
 			delete socket;
 		}
 	}
@@ -85,12 +85,13 @@ public:
 				if(err) {
 					return err;
 				} else if(written == 0) {
-					return boost::system::error_code(0);
+					return boost::system::error_code(
+							boost::asio::error::broken_pipe);
 				}
 			}
 			return err;
 		}
-		return ;
+		return boost::system::error_code();
 	}
 	
 	template<typename Func>
@@ -131,12 +132,11 @@ inline boost::system::error_code GenericSocket<Streams::SSL>::ConnectSsl(
 	}
 	socket->handshake(boost::asio::ssl::stream_base::client, err);
 	if(err) {
-		socket->close();
 		delete socket;
 		socket = NULL;
 		return err;
 	}
-	return boost::system::error_code(0);
+	return boost::system::error_code();
 }
 	
 using GenericSocketUdp = GenericSocket<Streams::UDP>;
