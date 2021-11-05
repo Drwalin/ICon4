@@ -101,6 +101,30 @@ public:
 		return endpoint.to_string();
 	}
 	
+	inline boost::asio::ip::address Address() const {
+		return endpoint.address();
+	}
+	
+	inline void Address(boost::asio::ip::address addr) {
+		endpoint.address(addr);
+	}
+	
+	inline uint16_t Port() const {
+		return endpoint.port();
+	}
+	
+	inline void Port(uint16_t port) {
+		endpoint.port(port);
+	}
+	
+	inline bool IsIPv4() const {
+		return endpoint.is_v4();
+	}
+	
+	inline bool IsIPv6() const {
+		return !endpoint.is_v4();
+	}
+	
 public:
 	
 	union {
