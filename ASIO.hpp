@@ -27,6 +27,7 @@
 #include <cinttypes>
 
 #include <boost/asio/ip/address.hpp>
+#include <boost/system/error_code.hpp>
 
 namespace boost {
 	namespace asio {

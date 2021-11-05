@@ -29,13 +29,17 @@ struct GenericSocket;
 class Socket {
 public:
 	
+	inline const static size_t maxSingleBuffer = 64*1024;
+	
 	enum Type {
 		UDP,
 		TCP,
-		SSL
+		SSL,
+		Invalid
 	};
 	
 	Socket(Endpoint endpoint, bool enableHeader, Type type);
+	Socket(Endpoint endpoint, bool enableHeader, const char* rootCertFile);
 	~Socket();
 	
 	bool Send(const void* buffer, size_t bytes);
@@ -46,9 +50,9 @@ public:
 	
 	union {
 #ifdef GENERIC_SOCKET_HPP
-		GenericSocket<Streams::UDP>* udp;
-		GenericSocket<Streams::TCP>* tcp;
-		GenericSocket<Streams::SSL>* ssl;
+		GenericSocketUdp* udp;
+		GenericSocketTcp* tcp;
+		GenericSocketSsl* ssl;
 #endif
 		void* ptr;
 	};
@@ -57,9 +61,24 @@ public:
 	size_t received, header;
 	Endpoint endpoint;
 	Type type;
-	bool enabledHeader;
+	bool enableHeader;
+	
+	void SetOnError(void(*function)(Socket, const boost::system::error_code&));
+	void SetOnReceive(void(*function)(Socket, void*, size_t));
+	
+private:
+	
+	void RecallOnReceive();
+	void InternalOnReceiveWithHeader(const boost::system::error_code& err,
+			size_t bytes);
+	void InternalOnReceiveWithoutHeader(const boost::system::error_code& err,
+			size_t bytes);
+	
+	struct {
+		void (*onError)(Socket*, const boost::system::error_code&);
+		void (*onReceive)(Socket*, void*, size_t);
+	} callback;
 };
-
 
 #endif
 
