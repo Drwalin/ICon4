@@ -41,5 +41,10 @@ inline GenericSocket<Streams::SSL>::GenericSocket(Endpoint endpoint,
 	socket.handshake(boost::asio::ssl::stream_base::client, err);
 }
 
+template<>
+inline void GenericSocket<Streams::SSL>::Close() {
+	socket.lowest_layer().cancel();
+}
+
 #endif
 

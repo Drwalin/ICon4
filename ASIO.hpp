@@ -27,6 +27,7 @@
 #include <cinttypes>
 
 #include <boost/asio/ip/address.hpp>
+#include <boost/asio/ip/detail/endpoint.hpp>
 #include <boost/system/error_code.hpp>
 
 namespace boost {
@@ -35,52 +36,82 @@ namespace boost {
 	}
 }
 
+#include <boost/asio.hpp>
+
 void IoContextPollOne();
 class boost::asio::io_context& IoContext();
 
 struct Endpoint {
 public:
 	
-	Endpoint() : port(0) {
+	Endpoint() {
 	}
 	
 	Endpoint(const char* ip, uint16_t port) :
-		address(boost::asio::ip::make_address(ip)), port(port) {
+		endpoint(boost::asio::ip::make_address(ip), port) {
 	}
 	
 	Endpoint(boost::asio::ip::address address, uint16_t port) :
-		address(address), port(port) {
+		endpoint(address, port) {
+	}
+	
+	Endpoint(const Endpoint& other) : endpoint(other.endpoint) {
+	}
+	
+	Endpoint(Endpoint&& other) : endpoint(other.endpoint) {
+	}
+	
+	Endpoint& operator=(const Endpoint& other) {
+		endpoint = other.endpoint;
+		return *this;
+	}
+	
+	Endpoint& operator=(Endpoint&& other) {
+		endpoint = other.endpoint;
+		return *this;
 	}
 	
 #ifdef BOOST_ASIO_IP_UDP_HPP
 	inline boost::asio::ip::udp::endpoint UdpEndpoint() const {
-		return boost::asio::ip::udp::endpoint(address, port);
+		return endpointUdp;
+	}
+	inline boost::asio::ip::udp::endpoint& UdpEndpoint() {
+		return endpointUdp;
 	}
 #endif
 	
 #ifdef BOOST_ASIO_IP_TCP_HPP
 	inline boost::asio::ip::tcp::endpoint TcpEndpoint() const {
-		return boost::asio::ip::tcp::endpoint(address, port);
+		return endpointTcp;
+	}
+	inline boost::asio::ip::tcp::endpoint& TcpEndpoint() {
+		return endpointTcp;
 	}
 #endif
 
 	inline bool operator == (const Endpoint& other) const {
-		return address==other.address && port==other.port;
+		return endpoint == other.endpoint;
 	}
 
 	inline bool operator < (const Endpoint& other) const {
-		return address<other.address ||
-			(address==other.address && port<other.port);
+		return endpoint < other.endpoint;
 	}
 
 	inline std::string ToString() const {
-		return address.to_string() + ":" + std::to_string(port);
+		return endpoint.to_string();
 	}
 	
 public:
 	
-	boost::asio::ip::address address;
-	uint16_t port;
+	union {
+		boost::asio::ip::detail::endpoint endpoint;
+#ifdef BOOST_ASIO_IP_UDP_HPP
+		boost::asio::ip::udp::endpoint endpointUdp;
+#endif
+#ifdef BOOST_ASIO_IP_TCP_HPP
+		boost::asio::ip::tcp::endpoint endpointTcp;
+#endif
+	};
 };
 
 namespace std {

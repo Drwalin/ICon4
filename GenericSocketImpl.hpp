@@ -41,7 +41,7 @@ inline boost::system::error_code GenericSocket<T>::Send(const void* data,
 
 template<typename T>
 inline void GenericSocket<T>::Close() {
-	socket.lowest_layer()->cancel();
+	socket.lowest_layer().cancel();
 	socket.close();
 }
 
@@ -49,11 +49,9 @@ template<typename T>
 inline void GenericSocket<T>::QueueFetch(std::vector<uint8_t>& buffer,
 		size_t offset,
 		std::function<void(boost::system::error_code, size_t)> function) {
-	if(socket) {
-		socket.async_read_some(boost::asio::buffer(
-				&(buffer[offset]), buffer.size()-offset),
-				function);
-	}
+	socket.async_read_some(boost::asio::buffer(
+			&(buffer[offset]), buffer.size()-offset),
+			function);
 }
 
 #endif

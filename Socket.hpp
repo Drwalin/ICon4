@@ -20,6 +20,7 @@
 #define SOCKET_HPP
 
 #include <vector>
+#include <functional>
 
 #include "ASIO.hpp"
 
@@ -62,9 +63,10 @@ public:
 	Endpoint endpoint;
 	Type type;
 	bool enableHeader;
+	void* userPtr;
 	
-	void SetOnError(void(*function)(Socket, const boost::system::error_code&));
-	void SetOnReceive(void(*function)(Socket, void*, size_t));
+	void SetOnError(void(*function)(Socket*, const boost::system::error_code&));
+	void SetOnReceive(void(*function)(Socket*, void*, size_t));
 	
 private:
 	
@@ -77,6 +79,8 @@ private:
 	struct {
 		void (*onError)(Socket*, const boost::system::error_code&);
 		void (*onReceive)(Socket*, void*, size_t);
+		std::function<void(const boost::system::error_code&, size_t)>
+			onReceiveFunc;
 	} callback;
 };
 

@@ -22,6 +22,7 @@
 #include "Socket.hpp"
 
 Socket::Socket(Endpoint endpoint, bool enableHeader, Type type) {
+	userPtr = NULL;
 	received = 0;
 	header = 0;
 	this->type = type;
@@ -55,6 +56,7 @@ Socket::Socket(Endpoint endpoint, bool enableHeader, Type type) {
 }
 
 Socket::Socket(Endpoint endpoint, bool enableHeader, const char* rootCertFile) {
+	userPtr = NULL;
 	received = 0;
 	header = 0;
 	this->enableHeader = enableHeader;
@@ -89,17 +91,22 @@ void Socket::QueueFetch() {
 }
 
 void Socket::SetOnError(
-		void(*function)(Socket, const boost::system::error_code&)) {
+		void(*function)(Socket*, const boost::system::error_code&)) {
 	callback.onError = function;
 }
 
-void Socket::SetOnReceive(void(*function)(Socket, void*, size_t)) {
+void Socket::SetOnReceive(void(*function)(Socket*, void*, size_t)) {
 	if(callback.onReceive == NULL) {
 		callback.onReceive = function;
 		if(ptr) {
+			callback.onReceiveFunc = std::bind(
+					enableHeader ? &Socket::InternalOnReceiveWithHeader :
+					&Socket::InternalOnReceiveWithoutHeader, this,
+					std::placeholders::_1, std::placeholders::_2);
 			RecallOnReceive();
-			if(enabledHeader) {
-				fprintf(stderr, " Not implemented: %s:%ld\n", __FILE__, __LINE__);
+			if(enableHeader) {
+				fprintf(stderr, " Not implemented: %s:%d\n", __FILE__,
+						__LINE__);
 				fflush(stderr);
 			} else {
 				header = maxSingleBuffer;
@@ -111,28 +118,25 @@ void Socket::SetOnReceive(void(*function)(Socket, void*, size_t)) {
 }
 
 void Socket::RecallOnReceive() {
-	auto callbackFunc = std::bind(
-			enableHeader ? &Socket::InternalOnReceiveWithHeader :
-			&Socket::InternalOnReceiveWithoutHeader, this,
-			std::placeholders::_1, std::placeholders::_2);
 	switch(type) {
 		case UDP:
-			udp->QueueFetch(buffer, received, callbackFunc);
+			udp->QueueFetch(buffer, received, callback.onReceiveFunc);
 			break;
 		case TCP:
-			tcp->QueueFetch(buffer, received, callbackFunc);
+			tcp->QueueFetch(buffer, received, callback.onReceiveFunc);
 			break;
 		case SSL:
-			ssl->QueueFetch(buffer, received, callbackFunc);
+			ssl->QueueFetch(buffer, received, callback.onReceiveFunc);
 			break;
 		case Invalid:
 		default:
+			break;
 	}
 }
 
 void Socket::InternalOnReceiveWithHeader(const boost::system::error_code& err,
 		size_t bytes) {
-	fprintf(stderr, " Not implemented: %s:%ld\n", __FILE__, __LINE__);
+	fprintf(stderr, " Not implemented: %s:%d\n", __FILE__, __LINE__);
 	fflush(stderr);
 }
 

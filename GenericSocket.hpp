@@ -34,7 +34,7 @@ namespace Streams {
 	using SSL = boost::asio::ssl::stream<boost::asio::ip::tcp::socket>;
 }
 
-template<typename T=Streams::SSL>
+template<typename T>
 struct GenericSocket {
 public:
 	

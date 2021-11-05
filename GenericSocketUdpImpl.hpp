@@ -49,5 +49,15 @@ inline boost::system::error_code GenericSocket<Streams::UDP>::Send(
 	return err;
 }
 
+template<>
+inline void GenericSocket<Streams::UDP>::QueueFetch(
+		std::vector<uint8_t>& buffer, size_t offset,
+		std::function<void(boost::system::error_code, size_t)> function) {
+	boost::asio::ip::udp::endpoint endpoint;
+	socket.async_receive_from(
+			boost::asio::buffer(&(buffer[offset]), buffer.size()-offset),
+			endpoint, function);
+}
+
 #endif
 
