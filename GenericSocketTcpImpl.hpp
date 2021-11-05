@@ -24,18 +24,9 @@
 #include "GenericSocket.hpp"
 
 template<>
-inline boost::system::error_code GenericSocket<Streams::TCP>::Connect(
-		Endpoint endpoint, bool enableHeader) {
-	boost::system::error_code err;
-	Close();
-	socket = new Streams::TCP(IoContext());
-	socket->connect(endpoint.TcpEndpoint(), err);
-	if(err) {
-		Close();
-		return err;
-	}
-	this->endpoint = endpoint;
-	return boost::system::error_code();
+inline GenericSocket<Streams::TCP>::GenericSocket(Endpoint endpoint,
+		boost::system::error_code& err) : socket(IoContext()) {
+	socket.connect(endpoint.TcpEndpoint(), err);
 }
 
 #endif

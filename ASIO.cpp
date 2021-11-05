@@ -16,9 +16,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef CPP_FILES_CPP
-#define CPP_FILES_CPP
-#endif
+#include <boost/asio.hpp>
 
 #include "ASIO.hpp"
 

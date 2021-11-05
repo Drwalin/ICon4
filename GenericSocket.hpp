@@ -35,60 +35,37 @@ namespace Streams {
 }
 
 template<typename T=Streams::SSL>
-class GenericSocket {
+struct GenericSocket {
 public:
 	
-	GenericSocket() : socket(NULL) {}
-	
-	GenericSocket(T* socket) : socket(socket) {}
+	GenericSocket(T* socket);
+	GenericSocket(Endpoint endpoint, boost::system::error_code& err);
+	GenericSocket(Endpoint endpoint, const char* rootCertFile,
+			boost::system::error_code& err);
 	
 	~GenericSocket() { Close(); }
 	
-	inline boost::system::error_code Connect(Endpoint endpoint,
-			bool enableHeader);
-	
-	inline boost::system::error_code Connect(Endpoint endpoint,
-			bool enableHeader, const char* rootCertFile);
-	
-	inline void Close() {
-		if(socket) {
-			socket->cancel();
-			socket->close();
-			delete socket;
-			socket = NULL;
-			endpoint = Endpoint();
-		}
-	}
+	inline void Close();
 	
 	inline boost::system::error_code Send(const void* data, size_t bytes);
-	
 	inline void QueueFetch(std::vector<uint8_t>& buffer, size_t offset,
-			std::function<void(boost::system::error_code, size_t)> function) {
-		if(socket) {
-			socket->async_read_some(boost::asio::buffer(
-					&(buffer[offset]), buffer.size()-offset),
-					function);
-		}
-	}
+			std::function<void(boost::system::error_code, size_t)> function);
 	
-	inline bool Valid() const {
-		return socket!=NULL;
-	}
+	inline bool Valid() const { return socket!=NULL; }
 	
 public:
 	
-	T* socket;
-	Endpoint endpoint;
+	T socket;
 };
-
-using GenericSocketUdp = GenericSocket<Streams::UDP>;
-using GenericSocketTcp = GenericSocket<Streams::TCP>;
-using GenericSocketSsl = GenericSocket<Streams::SSL>;
 
 #include "GenericSocketImpl.hpp"
 #include "GenericSocketUdpImpl.hpp"
 #include "GenericSocketTcpImpl.hpp"
 #include "GenericSocketSslImpl.hpp"
+
+using GenericSocketUdp = GenericSocket<Streams::UDP>;
+using GenericSocketTcp = GenericSocket<Streams::TCP>;
+using GenericSocketSsl = GenericSocket<Streams::SSL>;
 
 #endif
 

@@ -24,37 +24,29 @@
 #include "GenericSocket.hpp"
 
 template<>
-inline boost::system::error_code GenericSocket<Streams::UDP>::Connect(
-		Endpoint endpoint, bool enableHeader) {
-	boost::system::error_code err;
-	Close();
-	socket = new Streams::UDP(IoContext(), endpoint.UdpEndpoint());
-	socket->connect(endpoint.UdpEndpoint(), err);
-	if(err) {
-		socket->close();
-		delete socket;
-		socket = NULL;
-		return err;
-	}
-	this->endpoint = endpoint;
-	return boost::system::error_code();
+inline GenericSocket<Streams::UDP>::GenericSocket(Endpoint endpoint,
+		boost::system::error_code& err) :
+	socket(IoContext(), endpoint.UdpEndpoint()) {
+		if(endpoint.port == 0) {
+			fprintf(stderr, "\nUDP Brodcast socket not implemented yet: %s:%i\n",
+					__FILE__, __LINE__);
+			fflush(stderr);
+		} else {
+			socket.connect(endpoint.UdpEndpoint(), err);
+		}
 }
 
 template<>
 inline boost::system::error_code GenericSocket<Streams::UDP>::Send(
 		const void* data, size_t bytes) {
 	boost::system::error_code err;
-	if(socket) {
-		size_t written = socket->send_to(boost::asio::buffer(data, bytes),
-				endpoint.UdpEndpoint(), 0, err);
-		if(err)
-			return err;
-		if(written != bytes)
-			return boost::system::error_code(
-					boost::asio::error::broken_pipe);
+	size_t written = socket.send(boost::asio::buffer(data, bytes), 0, err);
+	if(err)
 		return err;
-	}
-	return boost::system::error_code();
+	if(written != bytes)
+		return boost::system::error_code(
+				boost::asio::error::broken_pipe);
+	return err;
 }
 
 #endif

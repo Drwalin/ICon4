@@ -26,12 +26,18 @@
 
 #include <cinttypes>
 
-#include <boost/asio.hpp>
+#include <boost/asio/ip/address.hpp>
+
+namespace boost {
+	namespace asio {
+		class io_context;
+	}
+}
 
 void IoContextPollOne();
-boost::asio::io_context& IoContext();
+class boost::asio::io_context& IoContext();
 
-class Endpoint {
+struct Endpoint {
 public:
 	
 	Endpoint() : port(0) {
@@ -45,13 +51,17 @@ public:
 		address(address), port(port) {
 	}
 	
+#ifdef BOOST_ASIO_IP_UDP_HPP
 	inline boost::asio::ip::udp::endpoint UdpEndpoint() const {
 		return boost::asio::ip::udp::endpoint(address, port);
 	}
+#endif
 	
+#ifdef BOOST_ASIO_IP_TCP_HPP
 	inline boost::asio::ip::tcp::endpoint TcpEndpoint() const {
 		return boost::asio::ip::tcp::endpoint(address, port);
 	}
+#endif
 
 	inline bool operator == (const Endpoint& other) const {
 		return address==other.address && port==other.port;

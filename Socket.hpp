@@ -16,30 +16,50 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#ifndef SOCKET_HPP
+#define SOCKET_HPP
 
-#ifndef GENERIC_SOCKET_SSL_IMPL_HPP
-#define GENERIC_SOCKET_SSL_IMPL_HPP
+#include <vector>
 
-#include "GenericSocket.hpp"
+#include "ASIO.hpp"
 
-template<>
-inline GenericSocket<Streams::SSL>::GenericSocket(Endpoint endpoint,
-		const char* rootCertFile, boost::system::error_code& err) :
-	socket(IoContext(), [&]()->boost::asio::ssl::context&{
-			static thread_local boost::asio::ssl::context* sslContext = NULL;
-			if(sslContext != NULL)
-				delete sslContext;
-			sslContext = new boost::asio::ssl::context(
-						boost::asio::ssl::context::sslv23);
-			sslContext->load_verify_file(rootCertFile);
-			return *sslContext;
-			}()) {
-	socket.lowest_layer().connect(endpoint.TcpEndpoint(), err);
-	if(err)
-		return;
-	socket.handshake(boost::asio::ssl::stream_base::client, err);
-}
+template<typename T>
+struct GenericSocket;
+
+class Socket {
+public:
+	
+	enum Type {
+		UDP,
+		TCP,
+		SSL
+	};
+	
+	Socket(Endpoint endpoint, bool enableHeader, Type type);
+	~Socket();
+	
+	bool Send(const void* buffer, size_t bytes);
+	void QueueFetch();
+	void OnError(void* function);
+	
+public:
+	
+	union {
+#ifdef GENERIC_SOCKET_HPP
+		GenericSocket<Streams::UDP>* udp;
+		GenericSocket<Streams::TCP>* tcp;
+		GenericSocket<Streams::SSL>* ssl;
+#endif
+		void* ptr;
+	};
+	
+	std::vector<uint8_t> buffer;
+	size_t received, header;
+	Endpoint endpoint;
+	Type type;
+	bool enabledHeader;
+};
+
 
 #endif
 

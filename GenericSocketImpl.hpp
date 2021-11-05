@@ -24,23 +24,36 @@
 #include "GenericSocket.hpp"
 
 template<typename T>
-inline boost::system::error_code GenericSocket<T>::Send(const void* data, size_t bytes) {
+inline boost::system::error_code GenericSocket<T>::Send(const void* data,
+		size_t bytes) {
 	boost::system::error_code err;
-	if(socket) {
-		for(uint64_t i=0; i<bytes;) {
-			size_t written = socket->write_some(
-					boost::asio::buffer((uint8_t*)data+i, bytes-i), err);
-			i += written;
-			if(err) {
-				return err;
-			} else if(written == 0) {
-				return boost::system::error_code(
-						boost::asio::error::broken_pipe);
-			}
-		}
-		return err;
+	for(uint64_t i=0; i<bytes;) {
+		size_t written = socket->write_some(
+				boost::asio::buffer((uint8_t*)data+i, bytes-i), err);
+		i += written;
+		if(err)
+			return err;
+		else if(written == 0)
+			return boost::system::error_code(boost::asio::error::broken_pipe);
 	}
 	return boost::system::error_code();
+}
+
+template<typename T>
+inline void GenericSocket<T>::Close() {
+	socket.lowest_layer()->cancel();
+	socket.close();
+}
+
+template<typename T>
+inline void GenericSocket<T>::QueueFetch(std::vector<uint8_t>& buffer,
+		size_t offset,
+		std::function<void(boost::system::error_code, size_t)> function) {
+	if(socket) {
+		socket.async_read_some(boost::asio::buffer(
+				&(buffer[offset]), buffer.size()-offset),
+				function);
+	}
 }
 
 #endif
