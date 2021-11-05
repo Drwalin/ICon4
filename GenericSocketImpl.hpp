@@ -16,20 +16,32 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef CPP_FILES_CPP
-#define CPP_FILES_CPP
+#pragma once
+
+#ifndef GENERIC_SOCKET_IMPL_HPP
+#define GENERIC_SOCKET_IMPL_HPP
+
+#include "GenericSocket.hpp"
+
+template<typename T>
+inline boost::system::error_code GenericSocket<T>::Send(const void* data, size_t bytes) {
+	boost::system::error_code err;
+	if(socket) {
+		for(uint64_t i=0; i<bytes;) {
+			size_t written = socket->write_some(
+					boost::asio::buffer((uint8_t*)data+i, bytes-i), err);
+			i += written;
+			if(err) {
+				return err;
+			} else if(written == 0) {
+				return boost::system::error_code(
+						boost::asio::error::broken_pipe);
+			}
+		}
+		return err;
+	}
+	return boost::system::error_code();
+}
+
 #endif
-
-#include "ASIO.hpp"
-
-boost::asio::io_context& IoContext() {
-	static boost::asio::io_context* ioContext = NULL;
-	if(ioContext == NULL)
-		ioContext = new boost::asio::io_context;
-	return *ioContext;
-}
-
-void IoContextPollOne() {
-	IoContext().poll_one();
-}
 

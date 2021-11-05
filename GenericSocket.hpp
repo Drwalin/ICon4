@@ -2,12 +2,12 @@
  *  This file is part of ICon4. Please see README for details.
  *  Copyright (C) 2021 Marek Zalewski aka Drwalin
  *
- *  ICon3 is free software: you can redistribute it and/or modify
+ *  ICon4 is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
  *
- *  ICon3 is distributed in the hope that it will be useful,
+ *  ICon4 is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
@@ -38,65 +38,32 @@ template<typename T=Streams::SSL>
 class GenericSocket {
 public:
 	
-	GenericSocket() :
-		socket(NULL) {
-	}
+	GenericSocket() : socket(NULL) {}
 	
-	GenericSocket(T* socket) :
-		socket(socket) {
-	}
+	GenericSocket(T* socket) : socket(socket) {}
 	
-	~GenericSocket() {
-		Close();
-	}
+	~GenericSocket() { Close(); }
 	
 	inline boost::system::error_code Connect(Endpoint endpoint,
-			bool enableSizeInHeader) {
-		boost::system::error_code err;
-		Close();
-		socket = new T(IoContext());
-		socket->connect(endpoint, err);
-		if(err) {
-			socket->close();
-			delete socket;
-			socket = NULL;
-			return err;
-		}
-		return boost::system::error_code();
-	}
+			bool enableHeader);
 	
-	inline boost::system::error_code ConnectSsl(Endpoint endpoint,
-			bool enableSizeInHeader, const char* rootCertFile);
+	inline boost::system::error_code Connect(Endpoint endpoint,
+			bool enableHeader, const char* rootCertFile);
 	
 	inline void Close() {
 		if(socket) {
 			socket->cancel();
+			socket->close();
 			delete socket;
+			socket = NULL;
+			endpoint = Endpoint();
 		}
 	}
 	
-	inline boost::system::error_code Send(const void* data, size_t bytes) {
-		boost::system::error_code err;
-		if(socket) {
-			for(uint64_t i=0; i<bytes;) {
-				size_t written = socket->write_some(
-						boost::asio::buffer((uint8_t*)data+i, bytes-i), err);
-				i += written;
-				if(err) {
-					return err;
-				} else if(written == 0) {
-					return boost::system::error_code(
-							boost::asio::error::broken_pipe);
-				}
-			}
-			return err;
-		}
-		return boost::system::error_code();
-	}
+	inline boost::system::error_code Send(const void* data, size_t bytes);
 	
-	template<typename Func>
 	inline void QueueFetch(std::vector<uint8_t>& buffer, size_t offset,
-			Func function) {
+			std::function<void(boost::system::error_code, size_t)> function) {
 		if(socket) {
 			socket->async_read_some(boost::asio::buffer(
 					&(buffer[offset]), buffer.size()-offset),
@@ -111,37 +78,17 @@ public:
 public:
 	
 	T* socket;
+	Endpoint endpoint;
 };
 
-template<>
-inline boost::system::error_code GenericSocket<Streams::SSL>::Connect(
-		Endpoint endpoint, bool enableSizeInHeader) = delete;
-
-template<>
-inline boost::system::error_code GenericSocket<Streams::SSL>::ConnectSsl(
-		Endpoint endpoint, bool enableSizeInHeader, const char* rootCertFile) {
-	boost::system::error_code err;
-	boost::asio::ssl::context sslContext(boost::asio::ssl::context::sslv23);
-	sslContext.load_verify_file(rootCertFile);
-	socket = new Streams::SSL(IoContext(), sslContext);
-	socket->lowest_layer().connect(endpoint.TcpEndpoint(), err);
-	if(err) {
-		delete socket;
-		socket = NULL;
-		return err;
-	}
-	socket->handshake(boost::asio::ssl::stream_base::client, err);
-	if(err) {
-		delete socket;
-		socket = NULL;
-		return err;
-	}
-	return boost::system::error_code();
-}
-	
 using GenericSocketUdp = GenericSocket<Streams::UDP>;
 using GenericSocketTcp = GenericSocket<Streams::TCP>;
 using GenericSocketSsl = GenericSocket<Streams::SSL>;
+
+#include "GenericSocketImpl.hpp"
+#include "GenericSocketUdpImpl.hpp"
+#include "GenericSocketTcpImpl.hpp"
+#include "GenericSocketSslImpl.hpp"
 
 #endif
 

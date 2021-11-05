@@ -16,20 +16,27 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef CPP_FILES_CPP
-#define CPP_FILES_CPP
+#pragma once
+
+#ifndef GENERIC_SOCKET_TCP_IMPL_HPP
+#define GENERIC_SOCKET_TCP_IMPL_HPP
+
+#include "GenericSocket.hpp"
+
+template<>
+inline boost::system::error_code GenericSocket<Streams::TCP>::Connect(
+		Endpoint endpoint, bool enableHeader) {
+	boost::system::error_code err;
+	Close();
+	socket = new Streams::TCP(IoContext());
+	socket->connect(endpoint.TcpEndpoint(), err);
+	if(err) {
+		Close();
+		return err;
+	}
+	this->endpoint = endpoint;
+	return boost::system::error_code();
+}
+
 #endif
-
-#include "ASIO.hpp"
-
-boost::asio::io_context& IoContext() {
-	static boost::asio::io_context* ioContext = NULL;
-	if(ioContext == NULL)
-		ioContext = new boost::asio::io_context;
-	return *ioContext;
-}
-
-void IoContextPollOne() {
-	IoContext().poll_one();
-}
 
