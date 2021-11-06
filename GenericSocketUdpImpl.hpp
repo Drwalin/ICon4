@@ -27,7 +27,7 @@ template<>
 inline GenericSocket<Streams::UDP>::GenericSocket(Endpoint endpoint,
 		boost::system::error_code& err) :
 	socket(IoContext(), endpoint.UdpEndpoint()) {
-		if(endpoint.port == 0) {
+		if(endpoint.Port() == 0) {
 			fprintf(stderr, "\nUDP Brodcast socket not implemented yet: %s:%i\n",
 					__FILE__, __LINE__);
 			fflush(stderr);

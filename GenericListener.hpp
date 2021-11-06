@@ -16,24 +16,48 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#pragma once
+
 #ifndef GENERIC_LISTENER_HPP
 #define GENERIC_LISTENER_HPP
 
-#include "GenericSocket.hpp"
+#include <boost/asio.hpp>
+#include <boost/asio/error.hpp>
+#include <boost/asio/ssl.hpp>
+#include <boost/asio/basic_socket.hpp>
+#include <cinttypes>
+#include <string>
+#include <functional>
 
-class Listener {
+#include "ASIO.hpp"
+#include "GenericSocket.hpp"
+#include "Socket.hpp"
+
+template<typename T>
+class GenericListenerCore;
+
+template<typename T>
+class GenericListener {
 public:
 	
-	Listener();
-	~Listener();
+	GenericListener(Endpoint endpoint, boost::system::error_code& err);
+	GenericListener(Endpoint endpoint, const char* certChainFile,
+			const char* privateKeyFile, const char* dhFile,
+			std::string password, boost::system::error_code& err);
+	~GenericListener();
 	
-	
+	void SetOnAccept(std::function<bool(Endpoint, Socket*)> function);
+	void SetOnError(
+			std::function<void(const boost::system::error_code&)> function);
 	
 public:
 	
-	
-	
+	GenericListenerCore<T> core;
 };
+
+#include "GenericListenerImpl.hpp"
+#include "GenericListenerTcpImpl.hpp"
+#include "GenericListenerSslImpl.hpp"
 
 #endif
 

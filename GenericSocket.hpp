@@ -16,6 +16,8 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#pragma once
+
 #ifndef GENERIC_SOCKET_HPP
 #define GENERIC_SOCKET_HPP
 
