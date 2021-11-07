@@ -41,7 +41,6 @@ inline void GenericListener<T>::StartListening(
 template<typename T>
 inline void GenericListener<T>::InternalAsyncListening() {
 	core.acceptor.async_accept(callback.onAcceptInternal);
-
 }
 
 #endif

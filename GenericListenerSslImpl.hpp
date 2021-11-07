@@ -56,5 +56,43 @@ public:
 	boost::asio::ssl::context sslContext;
 };
 
+
+
+template<>
+GenericListener<Streams::SSL>::GenericListener(Endpoint endpoint,
+		boost::system::error_code& err) = delete;
+
+template<>
+GenericListener<Streams::SSL>::GenericListener(Endpoint endpoint,
+		const char* certChainFile, const char* privateKeyFile,
+		const char* dhFile, std::string password,
+		boost::system::error_code& err) :
+	core(endpoint, certChainFile, privateKeyFile, dhFile, password, err) {
+}
+
+template<>
+GenericListener<Streams::SSL>::~GenericListener() {
+}
+
+template<>
+inline void GenericListener<Streams::SSL>::InternalAccept(
+		const boost::system::error_code& err,
+		Streams::TCP&& asioSocket) {
+	if(err) {
+		callback.onError(err);
+		return;
+	}
+	boost::system::error_code error;
+	GenericSocketSsl *genericSocket =
+		new GenericSocketSsl(std::forward<Streams::TCP>(asioSocket),
+				core.sslContext, error);
+	if(err) {
+		callback.onError(err);
+		delete genericSocket;
+		return;
+	}
+	Socket* socket = new Socket(genericSocket);
+	callback.onAccept(socket);
+}
 #endif
 

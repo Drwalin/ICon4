@@ -60,12 +60,14 @@ template<>
 GenericListener<Streams::TCP>::~GenericListener() {
 }
 
-
-
 template<>
 inline void GenericListener<Streams::TCP>::InternalAccept(
 		const boost::system::error_code& err,
 		Streams::TCP&& asioSocket) {
+	if(err) {
+		callback.onError(err);
+		return;
+	}
 	GenericSocketTcp *genericSocket =
 		new GenericSocketTcp(std::forward<Streams::TCP>(asioSocket));
 	Socket* socket = new Socket(genericSocket);

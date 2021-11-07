@@ -36,7 +36,8 @@ GenericSocket<Streams::TCP>::GenericSocket(Streams::TCP&& asioSocket) :
 
 template<>
 GenericSocket<Streams::TCP>::GenericSocket(Streams::TCP&& asioSocket,
-		boost::asio::ssl::context& sslContext) = delete;
+		boost::asio::ssl::context& sslContext,
+		boost::system::error_code& err) = delete;
 
 #endif
 

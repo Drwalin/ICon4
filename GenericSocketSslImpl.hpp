@@ -51,9 +51,10 @@ GenericSocket<Streams::SSL>::GenericSocket(Streams::TCP&& socket) = delete;
 
 template<>
 GenericSocket<Streams::SSL>::GenericSocket(Streams::TCP&& asioSocket,
-		boost::asio::ssl::context& sslContext) :
-	socket(IoContext(), sslContext) {
-		socket.next_layer() = std::forward<Streams::TCP>(asioSocket);
+		boost::asio::ssl::context& sslContext,
+		boost::system::error_code& err) : socket(IoContext(), sslContext) {
+	socket.next_layer() = std::forward<Streams::TCP>(asioSocket);
+	socket.handshake(boost::asio::ssl::stream_base::server, err);
 }
 
 #endif
