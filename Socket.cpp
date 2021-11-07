@@ -16,19 +16,68 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#ifndef SOCKET_CPP
+#define SOCKET_CPP
+
 #include <boost/asio.hpp>
 
 #include "GenericSocket.hpp"
 #include "Socket.hpp"
 
-Socket::Socket(Endpoint endpoint, bool enableHeader, Type type) {
+struct NetByteOrder {
+	uint8_t b[2];
+	
+	void Set(uint16_t value) {
+		b[0] = value&0xFF;
+		b[1] = (value>>8)&0xFF;
+	}
+	
+	uint16_t Get() const {
+		return b[0] | ((uint16_t)b[1])<<8;
+	}
+	
+	static size_t Read(const void* buffer) {
+		return ((const NetByteOrder*)buffer)->Get();
+	}
+};
+
+Socket::Socket(Endpoint endpoint, boost::system::error_code& err,
+		bool enableHeader, Type type) {
+	userPtr = NULL;
+	received = 0;
+	header = 0;
+	this->type = Invalid;
+	this->enableHeader = false;
+	ptr = NULL;
+	if(type == TCP) {
+		InternalCreate(endpoint, err, enableHeader, TCP);
+	} else {
+		err = boost::asio::error::bad_descriptor;
+	}
+}
+
+Socket::Socket(Endpoint endpoint, boost::system::error_code& err, Type type) {
+	userPtr = NULL;
+	received = 0;
+	header = 0;
+	this->type = Invalid;
+	this->enableHeader = false;
+	ptr = NULL;
+	if(type == UDP) {
+		InternalCreate(endpoint, err, enableHeader, UDP);
+	} else {
+		err = boost::asio::error::bad_descriptor;
+	}
+}
+
+void Socket::InternalCreate(Endpoint endpoint, boost::system::error_code& err,
+	bool enableHeader, Type type) {
 	userPtr = NULL;
 	received = 0;
 	header = 0;
 	this->type = type;
 	this->enableHeader = enableHeader;
 	ptr = NULL;
-	boost::system::error_code err;
 	switch(type) {
 		case UDP:
 			udp = new GenericSocketUdp(endpoint, err);
@@ -55,12 +104,12 @@ Socket::Socket(Endpoint endpoint, bool enableHeader, Type type) {
 	this->endpoint = endpoint;
 }
 
-Socket::Socket(Endpoint endpoint, bool enableHeader, const char* rootCertFile) {
+Socket::Socket(Endpoint endpoint, boost::system::error_code& err,
+		bool enableHeader, const char* rootCertFile) {
 	userPtr = NULL;
 	received = 0;
 	header = 0;
 	this->enableHeader = enableHeader;
-	boost::system::error_code err;
 	ssl = new GenericSocketSsl(endpoint, rootCertFile, err);
 	if(err) {
 		delete ssl;
@@ -84,10 +133,39 @@ Socket::~Socket() {
 }
 
 bool Socket::Send(const void* buffer, size_t bytes) {
-	return false;
+	if(buffer==NULL || bytes==0)
+		return false;
+	if(enableHeader) {
+		if(bytes > maxSingleBuffer)
+			return false;
+		NetByteOrder size;
+		size.Set(bytes-1);
+		InternalSend(size.b, 2);
+	}
+	return InternalSend(buffer, bytes);
 }
 
-void Socket::QueueFetch() {
+inline bool Socket::InternalSend(const void* buffer, size_t bytes) {
+	boost::system::error_code err;
+	switch(type) {
+		case UDP:
+			err = udp->Send(buffer, bytes);
+			break;
+		case TCP:
+			err = tcp->Send(buffer, bytes);
+			break;
+		case SSL:
+			err = ssl->Send(buffer, bytes);
+			break;
+		case Invalid:
+		default:
+			break;
+	}
+	if(err) {
+		callback.onError(this, err);
+		return false;
+	}
+	return true;
 }
 
 void Socket::SetOnError(
@@ -136,8 +214,26 @@ void Socket::RecallOnReceive() {
 
 void Socket::InternalOnReceiveWithHeader(const boost::system::error_code& err,
 		size_t bytes) {
-	fprintf(stderr, " Not implemented: %s:%d\n", __FILE__, __LINE__);
-	fflush(stderr);
+	if(err || bytes==0) {
+		if(callback.onError)
+			callback.onError(this, err);
+	} else {
+		if(received==header && header) {
+			callback.onReceive(this, &(buffer[0]), bytes);
+			received = 0;
+			header = 0;
+			buffer.resize(2);
+		} else {
+			if(received==2 && header==0 && buffer.size()==2) {
+				header = NetByteOrder::Read(buffer.data())+3;
+				buffer.resize(header);
+			} else if(received < 2) {
+				buffer.resize(2);
+				header = 0;
+			}
+		}
+	}
+	RecallOnReceive();
 }
 
 void Socket::InternalOnReceiveWithoutHeader(const boost::system::error_code& err,
@@ -147,7 +243,9 @@ void Socket::InternalOnReceiveWithoutHeader(const boost::system::error_code& err
 			callback.onError(this, err);
 	} else {
 		callback.onReceive(this, &(buffer[0]), bytes);
-		RecallOnReceive();
 	}
+	RecallOnReceive();
 }
+
+#endif
 

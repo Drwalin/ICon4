@@ -122,7 +122,5 @@ void Listener::SetOnError(
 	}
 }
 
-
-
 #endif
 

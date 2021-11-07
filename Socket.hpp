@@ -45,12 +45,14 @@ public:
 	Socket(GenericSocketSsl* ssl);
 #endif
 	
-	Socket(Endpoint endpoint, bool enableHeader, Type type);
-	Socket(Endpoint endpoint, bool enableHeader, const char* rootCertFile);
+	Socket(Endpoint endpoint, boost::system::error_code& err,
+			bool enableHeader, Type type=TCP);
+	Socket(Endpoint endpoint, boost::system::error_code& err, Type type=UDP);
+	Socket(Endpoint endpoint, boost::system::error_code& err,
+			bool enableHeader, const char* rootCertFile);
 	~Socket();
 	
 	bool Send(const void* buffer, size_t bytes);
-	void QueueFetch();
 	void OnError(void* function);
 	
 	void SetOnError(void(*function)(Socket*, const boost::system::error_code&));
@@ -75,6 +77,11 @@ public:
 	void* userPtr;
 	
 private:
+	
+	void InternalCreate(Endpoint endpoint, boost::system::error_code& err,
+			bool enableHeader, Type type);
+	
+	inline bool InternalSend(const void* buffer, size_t bytes);
 	
 	void RecallOnReceive();
 	void InternalOnReceiveWithHeader(const boost::system::error_code& err,
