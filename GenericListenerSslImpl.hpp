@@ -43,6 +43,8 @@ public:
 				boost::asio::ssl::context::pem);
 		sslContext.use_tmp_dh_file(dhFile);
 		acceptor.listen(256, err);
+		for(size_t i=0; i<password.size(); ++i)
+			password[i] = ' ';
 	}
 
 	~GenericListenerCore() { Close(); }
@@ -68,6 +70,8 @@ GenericListener<Streams::SSL>::GenericListener(Endpoint endpoint,
 		const char* dhFile, std::string password,
 		boost::system::error_code& err) :
 	core(endpoint, certChainFile, privateKeyFile, dhFile, password, err) {
+	for(size_t i=0; i<password.size(); ++i)
+		password[i] = ' ';
 }
 
 template<>
@@ -94,5 +98,6 @@ inline void GenericListener<Streams::SSL>::InternalAccept(
 	Socket* socket = new Socket(genericSocket);
 	callback.onAccept(socket);
 }
+
 #endif
 

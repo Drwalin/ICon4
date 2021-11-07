@@ -75,5 +75,8 @@ public:
 #include "GenericListenerTcpImpl.hpp"
 #include "GenericListenerSslImpl.hpp"
 
+using GenericListenerTcp = GenericListener<Streams::TCP>;
+using GenericListenerSsl = GenericListener<Streams::SSL>;
+
 #endif
 
