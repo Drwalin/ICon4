@@ -40,7 +40,8 @@ template<typename T>
 struct GenericSocket {
 public:
 	
-	GenericSocket(T* socket);
+	GenericSocket(Streams::TCP&& asioSocket);
+	GenericSocket(Streams::TCP&& asioSocket, boost::asio::ssl::context& sslContext);
 	GenericSocket(Endpoint endpoint, boost::system::error_code& err);
 	GenericSocket(Endpoint endpoint, const char* rootCertFile,
 			boost::system::error_code& err);

@@ -23,5 +23,26 @@
 
 #include "GenericListener.hpp"
 
+template<typename T>
+inline void GenericListener<T>::SetOnError(
+		std::function<void(const boost::system::error_code&)> function) {
+	callback.onError = function;
+}
+
+template<typename T>
+inline void GenericListener<T>::StartListening(
+		std::function<bool(Socket*)> function) {
+	callback.onAcceptInternal = std::bind(&GenericListener<T>::InternalAccept,
+			this, std::placeholders::_1, std::placeholders::_2);
+	callback.onAccept = function;
+	InternalAsyncListening();
+}
+
+template<typename T>
+inline void GenericListener<T>::InternalAsyncListening() {
+	core.acceptor.async_accept(callback.onAcceptInternal);
+
+}
+
 #endif
 

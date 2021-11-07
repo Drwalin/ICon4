@@ -39,6 +39,12 @@ public:
 		Invalid
 	};
 	
+#ifdef GENERIC_SOCKET_HPP
+	Socket(GenericSocketUdp* udp);
+	Socket(GenericSocketTcp* tcp);
+	Socket(GenericSocketSsl* ssl);
+#endif
+	
 	Socket(Endpoint endpoint, bool enableHeader, Type type);
 	Socket(Endpoint endpoint, bool enableHeader, const char* rootCertFile);
 	~Socket();
@@ -46,6 +52,9 @@ public:
 	bool Send(const void* buffer, size_t bytes);
 	void QueueFetch();
 	void OnError(void* function);
+	
+	void SetOnError(void(*function)(Socket*, const boost::system::error_code&));
+	void SetOnReceive(void(*function)(Socket*, void*, size_t));
 	
 public:
 	
@@ -64,9 +73,6 @@ public:
 	Type type;
 	bool enableHeader;
 	void* userPtr;
-	
-	void SetOnError(void(*function)(Socket*, const boost::system::error_code&));
-	void SetOnReceive(void(*function)(Socket*, void*, size_t));
 	
 private:
 	

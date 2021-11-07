@@ -28,6 +28,7 @@
 #include <cinttypes>
 #include <string>
 #include <functional>
+#include <utility>
 
 #include "ASIO.hpp"
 #include "GenericSocket.hpp"
@@ -46,12 +47,27 @@ public:
 			std::string password, boost::system::error_code& err);
 	~GenericListener();
 	
-	void SetOnAccept(std::function<bool(Endpoint, Socket*)> function);
-	void SetOnError(
+	inline void SetOnError(
 			std::function<void(const boost::system::error_code&)> function);
+	
+	inline void StartListening(
+			std::function<bool(Socket*)> function);
 	
 public:
 	
+	inline void InternalAsyncListening();
+	inline void InternalAccept(const boost::system::error_code& err,
+			Streams::TCP&& asioSocket);
+	
+	struct {
+		std::function<void(const boost::system::error_code&)> onError;
+		std::function<void(const boost::system::error_code&,
+				Streams::TCP&&)> onAcceptInternal;
+		std::function<void(Socket*)> onAccept;
+	} callback;
+	
+	Socket* acceptingSocket;
+	Endpoint acceptingEndpoint;
 	GenericListenerCore<T> core;
 };
 

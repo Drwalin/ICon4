@@ -46,5 +46,15 @@ inline void GenericSocket<Streams::SSL>::Close() {
 	socket.lowest_layer().cancel();
 }
 
+template<>
+GenericSocket<Streams::SSL>::GenericSocket(Streams::TCP&& socket) = delete;
+
+template<>
+GenericSocket<Streams::SSL>::GenericSocket(Streams::TCP&& asioSocket,
+		boost::asio::ssl::context& sslContext) :
+	socket(IoContext(), sslContext) {
+		socket.next_layer() = std::forward<Streams::TCP>(asioSocket);
+}
+
 #endif
 

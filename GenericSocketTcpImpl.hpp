@@ -29,5 +29,14 @@ inline GenericSocket<Streams::TCP>::GenericSocket(Endpoint endpoint,
 	socket.connect(endpoint.TcpEndpoint(), err);
 }
 
+template<>
+GenericSocket<Streams::TCP>::GenericSocket(Streams::TCP&& asioSocket) :
+	socket(std::forward<Streams::TCP>(asioSocket)) {
+}
+
+template<>
+GenericSocket<Streams::TCP>::GenericSocket(Streams::TCP&& asioSocket,
+		boost::asio::ssl::context& sslContext) = delete;
+
 #endif
 
