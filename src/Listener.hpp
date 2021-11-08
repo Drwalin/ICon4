@@ -55,12 +55,12 @@ public:
 	void StopListening();
 	
 	void StartAccepting(Endpoint endpoint,
-			std::function<bool(Socket*)> function,
+			std::function<bool(Socket*)> function, bool enableHeader,
 			boost::system::error_code& err);
 	void StartAccepting(Endpoint endpoint, const char* certChainFile,
 			const char* privateKeyFile, const char* dhFile,
 			std::string password, std::function<bool(Socket*)> function,
-			boost::system::error_code& err);
+			bool enableHeader, boost::system::error_code& err);
 	
 	void SetOnError(
 			std::function<void(const boost::system::error_code&)> function);

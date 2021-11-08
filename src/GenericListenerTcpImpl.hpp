@@ -35,6 +35,8 @@ public:
 	~GenericListenerCore() { Close(); }
 
 	inline void Close() {
+		printf(" GenericListener::Core::TCP::Close()\n");
+		fflush(stdout);
 		acceptor.cancel();
 		acceptor.close();
 	}
@@ -46,14 +48,14 @@ public:
 
 template<>
 GenericListener<Streams::TCP>::GenericListener(Endpoint endpoint,
-		boost::system::error_code& err) :
-	core(endpoint, err) {
+		bool enableHeader, boost::system::error_code& err) :
+	enableHeader(enableHeader), core(endpoint, err) {
 }
 
 template<>
 GenericListener<Streams::TCP>::GenericListener(Endpoint endpoint,
 		const char* certChainFile, const char* privateKeyFile,
-		const char* dhFile, std::string password,
+		const char* dhFile, std::string password, bool enableHeader,
 		boost::system::error_code& err) = delete;
 
 template<>
@@ -64,14 +66,17 @@ template<>
 inline void GenericListener<Streams::TCP>::InternalAccept(
 		const boost::system::error_code& err,
 		Streams::TCP&& asioSocket) {
+	printf(" %s() %s:%i\n", __PRETTY_FUNCTION__, __FILE__, __LINE__);
 	if(err) {
+	printf(" %s() %s:%i\n", __PRETTY_FUNCTION__, __FILE__, __LINE__);
 		callback.onError(err);
 		return;
 	}
 	GenericSocketTcp *genericSocket =
 		new GenericSocketTcp(std::forward<Streams::TCP>(asioSocket));
-	Socket* socket = new Socket(genericSocket);
-	callback.onAccept(socket);
+	Socket* socket = new Socket(genericSocket, enableHeader);
+	if(callback.onAccept(socket) == false)
+		delete socket;
 }
 
 #endif

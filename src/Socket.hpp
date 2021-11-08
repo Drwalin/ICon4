@@ -40,9 +40,9 @@ public:
 	};
 	
 #ifdef GENERIC_SOCKET_HPP
-	Socket(GenericSocketUdp* udp);
-	Socket(GenericSocketTcp* tcp);
-	Socket(GenericSocketSsl* ssl);
+	Socket(GenericSocketUdp* udp) = delete;
+	Socket(GenericSocketTcp* tcp, bool enableHeader);
+	Socket(GenericSocketSsl* ssl, bool enableHeader);
 #endif
 	
 	Socket(Endpoint endpoint, boost::system::error_code& err,
@@ -89,11 +89,12 @@ private:
 	void InternalOnReceiveWithoutHeader(const boost::system::error_code& err,
 			size_t bytes);
 	
-	struct {
+	struct __internal_callbacks {
 		void (*onError)(Socket*, const boost::system::error_code&);
 		void (*onReceive)(Socket*, void*, size_t);
 		std::function<void(const boost::system::error_code&, size_t)>
 			onReceiveFunc;
+		inline __internal_callbacks() : onError(NULL), onReceive(NULL) {}
 	} callback;
 };
 

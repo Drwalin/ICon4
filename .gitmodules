@@ -1,0 +1,3 @@
+[submodule "MakefileSTD"]
+	path = MakefileSTD
+	url = https://github.com/Drwalin/MakefileSTD.git

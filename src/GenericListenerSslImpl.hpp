@@ -62,13 +62,14 @@ public:
 
 template<>
 GenericListener<Streams::SSL>::GenericListener(Endpoint endpoint,
-		boost::system::error_code& err) = delete;
+		bool enableHeader, boost::system::error_code& err) = delete;
 
 template<>
 GenericListener<Streams::SSL>::GenericListener(Endpoint endpoint,
 		const char* certChainFile, const char* privateKeyFile,
-		const char* dhFile, std::string password,
+		const char* dhFile, std::string password, bool enableHeader,
 		boost::system::error_code& err) :
+	enableHeader(enableHeader),
 	core(endpoint, certChainFile, privateKeyFile, dhFile, password, err) {
 	for(size_t i=0; i<password.size(); ++i)
 		password[i] = ' ';
@@ -95,7 +96,7 @@ inline void GenericListener<Streams::SSL>::InternalAccept(
 		delete genericSocket;
 		return;
 	}
-	Socket* socket = new Socket(genericSocket);
+	Socket* socket = new Socket(genericSocket, enableHeader);
 	callback.onAccept(socket);
 }
 

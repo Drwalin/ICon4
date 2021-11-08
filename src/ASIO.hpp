@@ -19,6 +19,7 @@
 #ifndef ASIO_HPP
 #define ASIO_HPP
 
+#include <boost/asio/ip/address_v4.hpp>
 #include <string>
 #include <map>
 #include <unordered_map>
@@ -39,12 +40,14 @@ namespace boost {
 #include <boost/asio.hpp>
 
 void IoContextPollOne();
+void IoContextPoll();
 class boost::asio::io_context& IoContext();
 
 struct Endpoint {
 public:
 	
-	Endpoint() {
+	Endpoint() :
+		endpoint() {
 	}
 	
 	Endpoint(const char* ip, uint16_t port) :
@@ -53,6 +56,14 @@ public:
 	
 	Endpoint(boost::asio::ip::address address, uint16_t port) :
 		endpoint(address, port) {
+	}
+	
+	Endpoint(boost::asio::ip::tcp a, uint16_t port) :
+		endpointTcp(a, port) {
+	}
+	
+	Endpoint(boost::asio::ip::udp a, uint16_t port) :
+		endpointUdp(a, port) {
 	}
 	
 	Endpoint(const Endpoint& other) : endpoint(other.endpoint) {
@@ -78,6 +89,9 @@ public:
 	inline boost::asio::ip::udp::endpoint& UdpEndpoint() {
 		return endpointUdp;
 	}
+	Endpoint(boost::asio::ip::udp::endpoint endpoint) :
+		endpointUdp(endpoint) {
+	}
 #endif
 	
 #ifdef BOOST_ASIO_IP_TCP_HPP
@@ -86,6 +100,9 @@ public:
 	}
 	inline boost::asio::ip::tcp::endpoint& TcpEndpoint() {
 		return endpointTcp;
+	}
+	Endpoint(boost::asio::ip::tcp::endpoint endpoint) :
+		endpointTcp(endpoint) {
 	}
 #endif
 

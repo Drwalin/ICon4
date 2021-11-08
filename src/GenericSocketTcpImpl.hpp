@@ -16,18 +16,28 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <boost/asio.hpp>
+#pragma once
 
-#include "ASIO.hpp"
+#ifndef GENERIC_SOCKET_TCP_IMPL_HPP
+#define GENERIC_SOCKET_TCP_IMPL_HPP
 
-boost::asio::io_context& IoContext() {
-	static boost::asio::io_context* ioContext = NULL;
-	if(ioContext == NULL)
-		ioContext = new boost::asio::io_context;
-	return *ioContext;
+#include "GenericSocket.hpp"
+
+template<>
+inline GenericSocket<Streams::TCP>::GenericSocket(Endpoint endpoint,
+		boost::system::error_code& err) : socket(IoContext()) {
+	socket.connect(endpoint.TcpEndpoint(), err);
 }
 
-void IoContextPollOne() {
-	IoContext().poll_one();
+template<>
+inline GenericSocket<Streams::TCP>::GenericSocket(Streams::TCP&& asioSocket) :
+	socket(std::forward<Streams::TCP>(asioSocket)) {
 }
+
+template<>
+inline GenericSocket<Streams::TCP>::GenericSocket(Streams::TCP&& asioSocket,
+		boost::asio::ssl::context& sslContext,
+		boost::system::error_code& err) = delete;
+
+#endif
 

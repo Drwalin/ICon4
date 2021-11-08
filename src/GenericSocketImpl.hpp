@@ -28,13 +28,20 @@ inline boost::system::error_code GenericSocket<T>::Send(const void* data,
 		size_t bytes) {
 	boost::system::error_code err;
 	for(uint64_t i=0; i<bytes;) {
-		size_t written = socket->write_some(
+		size_t written = socket.write_some(
 				boost::asio::buffer((uint8_t*)data+i, bytes-i), err);
+		
+		printf(" %s() %s:%i      err(%s) written = %lu\n", __PRETTY_FUNCTION__, __FILE__,
+				__LINE__, err.message().c_str(), written);
 		i += written;
-		if(err)
+		if(err) {
+			printf(" %s() %s:%i      err(%s)\n", __PRETTY_FUNCTION__, __FILE__,
+					__LINE__, err.message().c_str());
 			return err;
-		else if(written == 0)
+		} else if(written == 0) {
+			printf(" %s() %s:%i\n", __PRETTY_FUNCTION__, __FILE__, __LINE__);
 			return boost::system::error_code(boost::asio::error::broken_pipe);
+		}
 	}
 	return boost::system::error_code();
 }

@@ -16,32 +16,35 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include <boost/asio.hpp>
+#include <mutex>
 
-#ifndef GENERIC_LISTENER_IMPL_HPP
-#define GENERIC_LISTENER_IMPL_HPP
+#include "ASIO.hpp"
 
-#include "GenericListener.hpp"
-
-template<typename T>
-inline void GenericListener<T>::SetOnError(
-		std::function<void(const boost::system::error_code&)> function) {
-	callback.onError = function;
+boost::asio::io_context& IoContext() {
+	static std::mutex mutex;
+	static boost::asio::io_context* ioContext = NULL;
+	std::lock_guard<std::mutex> lock(mutex);
+	if(ioContext == NULL)
+		ioContext = new boost::asio::io_context;
+	return *ioContext;
 }
 
-template<typename T>
-inline void GenericListener<T>::StartListening(
-		std::function<bool(Socket*)> function) {
-	callback.onAcceptInternal = std::bind(&GenericListener<T>::InternalAccept,
-			this, std::placeholders::_1, std::placeholders::_2);
-	callback.onAccept = function;
-	InternalAsyncListening();
+void IoContextPollOne() {
+	boost::system::error_code err;
+	IoContext().poll_one(err);
+	if(err) {
+		printf(" boost::asio::io_context::poll_one() error: %s\n",
+				err.message().c_str());
+	}
 }
 
-template<typename T>
-inline void GenericListener<T>::InternalAsyncListening() {
-	core.acceptor.async_accept(callback.onAcceptInternal);
+void IoContextPoll() {
+	boost::system::error_code err;
+	IoContext().poll(err);
+	if(err) {
+		printf(" boost::asio::io_context::poll() error: %s\n",
+				err.message().c_str());
+	}
 }
-
-#endif
 

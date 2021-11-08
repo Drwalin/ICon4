@@ -77,11 +77,13 @@ void Listener::StopListening() {
 }
 
 void Listener::StartAccepting(Endpoint endpoint,
-		std::function<bool(Socket*)> function,
+		std::function<bool(Socket*)> function, bool enableHeader,
 		boost::system::error_code& err) {
 	Close();
-	tcp = new GenericListenerTcp(endpoint, err);
+	printf(" %s() %s:%i\n", __PRETTY_FUNCTION__, __FILE__, __LINE__);
+	tcp = new GenericListenerTcp(endpoint, enableHeader, err);
 	if(err) {
+	printf(" %s() %s:%i\n", __PRETTY_FUNCTION__, __FILE__, __LINE__);
 		delete tcp;
 		ptr = NULL;
 		return;
@@ -91,11 +93,11 @@ void Listener::StartAccepting(Endpoint endpoint,
 
 void Listener::StartAccepting(Endpoint endpoint, const char* certChainFile,
 		const char* privateKeyFile, const char* dhFile, std::string password,
-		std::function<bool(Socket*)> function,
+		std::function<bool(Socket*)> function, bool enableHeader,
 		boost::system::error_code& err) {
 	Close();
 	ssl = new GenericListenerSsl(endpoint, certChainFile, privateKeyFile,
-			dhFile, password, err);
+			dhFile, password, enableHeader, err);
 	if(err) {
 		delete ssl;
 		ptr = NULL;
