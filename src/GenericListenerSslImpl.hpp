@@ -61,29 +61,31 @@ public:
 
 
 template<>
-GenericListener<Streams::SSL>::GenericListener(Endpoint endpoint,
+inline GenericListener<Streams::SSL>::GenericListener(Endpoint endpoint,
 		bool enableHeader, boost::system::error_code& err) = delete;
 
 template<>
-GenericListener<Streams::SSL>::GenericListener(Endpoint endpoint,
+inline GenericListener<Streams::SSL>::GenericListener(Endpoint endpoint,
 		const char* certChainFile, const char* privateKeyFile,
 		const char* dhFile, std::string password, bool enableHeader,
 		boost::system::error_code& err) :
 	enableHeader(enableHeader),
 	core(endpoint, certChainFile, privateKeyFile, dhFile, password, err) {
+	printf(" %s() %s:%i     error(%s)\n", __PRETTY_FUNCTION__, __FILE__, __LINE__, err.message().c_str());
 	for(size_t i=0; i<password.size(); ++i)
 		password[i] = ' ';
 }
 
 template<>
-GenericListener<Streams::SSL>::~GenericListener() {
+inline GenericListener<Streams::SSL>::~GenericListener() {
 }
 
 template<>
 inline void GenericListener<Streams::SSL>::InternalAccept(
 		const boost::system::error_code& err,
-		Streams::TCP&& asioSocket) {
+		Streams::TCP asioSocket) {
 	if(err) {
+	printf(" %s() %s:%i     error(%s)\n", __PRETTY_FUNCTION__, __FILE__, __LINE__, err.message().c_str());
 		callback.onError(err);
 		return;
 	}
@@ -91,8 +93,9 @@ inline void GenericListener<Streams::SSL>::InternalAccept(
 	GenericSocketSsl *genericSocket =
 		new GenericSocketSsl(std::forward<Streams::TCP>(asioSocket),
 				core.sslContext, error);
-	if(err) {
-		callback.onError(err);
+	if(error) {
+	printf(" %s() %s:%i     error(%s)\n", __PRETTY_FUNCTION__, __FILE__, __LINE__, error.message().c_str());
+		callback.onError(error);
 		delete genericSocket;
 		return;
 	}

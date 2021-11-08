@@ -11,7 +11,7 @@
 
 std::atomic<bool> running = true;
 
-const static uint16_t SERVER_PORT = 12345;
+std::atomic<uint16_t> SERVER_PORT = 25456;
 
 std::mutex mutex;
 void OnError(const boost::system::error_code& err) {
@@ -37,7 +37,7 @@ bool OnAccept(Socket* socket) {
 			printf(" Received from client: [%ld] '%s'\n", bytes,
 					(const char*)buffer);
 			fflush(stdout);
-			});
+			
 	std::string message = "A message sent from server!";
 	bool res = socket->Send(message.data(), message.size()+1);
 	if(res == false) {
@@ -45,10 +45,19 @@ bool OnAccept(Socket* socket) {
 		printf(" Send from server failed\n");
 		fflush(stdout);
 	}
+			});
 	return true;
 }
 
+extern "C" void Funkcja();
+
+void Funkcja() {
+}
+
+std::atomic<bool> server_starts_accepting = false;
+
 void server() {
+	class D{public:~D(){server_starts_accepting=true;}} object;
 	try {
 		Listener listener;
 		listener.SetOnError(OnError);
@@ -57,11 +66,13 @@ void server() {
 				SERVER_PORT);
 		endpoint.Port(SERVER_PORT);
 		boost::system::error_code err;
+		Funkcja();
 		listener.StartAccepting(endpoint, OnAccept, true, err);
 		if(err) {
 			OnError(err);
 			return;
 		}
+		std::this_thread::sleep_for(std::chrono::milliseconds(5000));
 	} catch(std::exception &e) {
 		std::lock_guard<std::mutex> lock(mutex);
 		printf(" Exception server: %s", e.what());
@@ -71,7 +82,7 @@ void server() {
 
 void client() {
 	try {
-		std::this_thread::sleep_for(std::chrono::milliseconds(50));
+		std::this_thread::sleep_for(std::chrono::milliseconds(500));
 		boost::system::error_code err;
 		Socket socket(Endpoint("127.0.0.1", SERVER_PORT), err, true);
 		if(err) {

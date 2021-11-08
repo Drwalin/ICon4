@@ -83,11 +83,12 @@ void Listener::StartAccepting(Endpoint endpoint,
 	printf(" %s() %s:%i\n", __PRETTY_FUNCTION__, __FILE__, __LINE__);
 	tcp = new GenericListenerTcp(endpoint, enableHeader, err);
 	if(err) {
-	printf(" %s() %s:%i\n", __PRETTY_FUNCTION__, __FILE__, __LINE__);
+	printf(" %s() %s:%i     error(%s)\n", __PRETTY_FUNCTION__, __FILE__, __LINE__, err.message().c_str());
 		delete tcp;
 		ptr = NULL;
 		return;
 	}
+	type = TCP;
 	tcp->StartListening(function);
 }
 
@@ -99,12 +100,14 @@ void Listener::StartAccepting(Endpoint endpoint, const char* certChainFile,
 	ssl = new GenericListenerSsl(endpoint, certChainFile, privateKeyFile,
 			dhFile, password, enableHeader, err);
 	if(err) {
+	printf(" %s() %s:%i     error(%s)\n", __PRETTY_FUNCTION__, __FILE__, __LINE__, err.message().c_str());
 		delete ssl;
 		ptr = NULL;
 		for(size_t i=0; i<password.size(); ++i)
 			password[i] = ' ';
 		return;
 	}
+	type = SSL;
 	ssl->StartListening(function);
 }
 

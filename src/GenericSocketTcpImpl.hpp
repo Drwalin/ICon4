@@ -27,6 +27,7 @@ template<>
 inline GenericSocket<Streams::TCP>::GenericSocket(Endpoint endpoint,
 		boost::system::error_code& err) : socket(IoContext()) {
 	socket.connect(endpoint.TcpEndpoint(), err);
+	printf(" %s() %s:%i     error(%s)\n", __PRETTY_FUNCTION__, __FILE__, __LINE__, err.message().c_str());
 }
 
 template<>

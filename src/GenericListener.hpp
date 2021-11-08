@@ -41,13 +41,13 @@ template<typename T>
 class GenericListener {
 public:
 	
-	GenericListener(Endpoint endpoint, bool enableHeader,
+	inline GenericListener(Endpoint endpoint, bool enableHeader,
 			boost::system::error_code& err);
-	GenericListener(Endpoint endpoint, const char* certChainFile,
+	inline GenericListener(Endpoint endpoint, const char* certChainFile,
 			const char* privateKeyFile, const char* dhFile,
 			std::string password, bool enableHeader,
 			boost::system::error_code& err);
-	~GenericListener();
+	inline ~GenericListener();
 	
 	inline void SetOnError(
 			std::function<void(const boost::system::error_code&)> function);
@@ -59,19 +59,19 @@ public:
 	
 	inline void InternalAsyncListening();
 	inline void InternalAccept(const boost::system::error_code& err,
-			Streams::TCP&& asioSocket);
+			Streams::TCP asioSocket);
 	
 	struct {
 		std::function<void(const boost::system::error_code&)> onError;
 		std::function<void(const boost::system::error_code&,
-				Streams::TCP&&)> onAcceptInternal;
+				Streams::TCP)> onAcceptInternal;
 		std::function<bool(Socket*)> onAccept;
 	} callback;
 	
-	Socket* acceptingSocket;
-	Endpoint acceptingEndpoint;
-	GenericListenerCore<T> core;
 	bool enableHeader;
+	//Socket* acceptingSocket;
+	//Endpoint acceptingEndpoint;
+	GenericListenerCore<T> core;
 };
 
 #include "GenericListenerImpl.hpp"
