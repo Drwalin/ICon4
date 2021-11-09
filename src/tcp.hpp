@@ -31,9 +31,12 @@ namespace net {
 			socket_impl(error_code& err, const endpoint& endpoint,
 					bool enableHeader);
 			virtual ~socket_impl() override;
-
+			
 			virtual bool is_open() const override;
 			virtual void close() override;
+
+			virtual size_t read_some_raw(void* buffer, size_t bytes,
+					error_code& err) override;
 
 		protected:
 			virtual error_code internal_send(const void* buffer,

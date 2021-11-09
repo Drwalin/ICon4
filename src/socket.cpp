@@ -61,6 +61,19 @@ namespace net {
 		return internal_send(buffer, bytes);
 	}
 	
+	size_t socket::read_raw(void* buffer, size_t bytes, error_code& err) {
+		uint8_t* buf = (uint8_t*)buffer;
+		size_t all_read=0;
+		while(bytes) {
+			size_t read = read_some_raw(buf+all_read, bytes, err);
+			all_read += read;
+			if(err)
+				break;
+			bytes -= read;
+		}
+		return all_read;
+	}
+	
 	void socket::set_on_receive(
 			std::function<void(socket*, void*, size_t)> callback) {
 		on_receive_callback = callback;

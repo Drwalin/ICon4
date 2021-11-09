@@ -44,6 +44,11 @@ namespace net {
 			sock.cancel();
 			sock.close();
 		}
+		
+		size_t socket_impl::read_some_raw(void* buffer, size_t bytes,
+				error_code& err) {
+			return sock.read_some(boost::asio::buffer(buffer, bytes), err);
+		}
 
 		error_code socket_impl::internal_send(const void* buffer, size_t bytes) {
 			error_code err;

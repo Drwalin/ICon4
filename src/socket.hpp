@@ -38,6 +38,8 @@ namespace net {
 		virtual ~socket();
 
 		error_code send(const void* buffer, size_t bytes);
+		size_t read_raw(void* buffer, size_t bytes, error_code& err);
+		virtual size_t read_some_raw(void* buffer, size_t bytes, error_code& err)=0;
 
 		virtual void set_on_receive(
 				std::function<void(socket*, void*, size_t)> callback);
