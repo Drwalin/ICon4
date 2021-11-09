@@ -12,8 +12,6 @@ bool on_error(net::socket* socket, const boost::system::error_code& err) {
 }
 
 int main() {
-	fflush(stdout);
-	fflush(stderr);
 	net::endpoint endpoint = net::endpoint::resolve_any_tcp("example.com", "http");
 	printf(" Resolved endpoint: %s\n", endpoint.to_string().c_str());
 	net::error_code err;

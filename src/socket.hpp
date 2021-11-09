@@ -43,8 +43,7 @@ namespace net {
 
 		virtual void set_on_receive(
 				std::function<void(socket*, void*, size_t)> callback);
-		void set_on_error(
-				std::function<bool(socket*, error_code)> callback);
+		void set_on_error(std::function<bool(socket*, error_code)> callback);
 
 		inline void* user_pointer() { return user_ptr; }
 		inline void user_pointer(void* ptr) { user_ptr = ptr; }
@@ -66,8 +65,7 @@ namespace net {
 	protected:
 
 		std::function<bool(const error_code&)> on_error_callback;
-		std::function<void(socket*, void*, size_t)>
-			on_receive_callback;
+		std::function<void(socket*, void*, size_t)> on_receive_callback;
 		const std::function<void(const error_code&, size_t)>
 			on_receive_internal_callback;
 		std::vector<uint8_t> buffer;
@@ -75,7 +73,6 @@ namespace net {
 		void* user_ptr;
 		const bool enableHeader;
 	};
-
 }
 
 #endif

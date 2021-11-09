@@ -18,16 +18,27 @@
 
 #include <boost/asio.hpp>
 
-#include "tcp.hpp"
+#include "tcp_socket_impl.hpp"
+
+#include <utility>
 
 #include "asio.hpp"
 #include "socket.hpp"
 
 namespace net {
 	namespace tcp {
+		socket_impl::socket_impl(bool enableHeader) :socket(enableHeader),
+			sock(*default_io_context()) {
+		}
+		
+		socket_impl::socket_impl(boost::asio::ip::tcp::socket other,
+				bool enableHeader) : socket(enableHeader),
+			sock(*default_io_context()) {
+				sock = std::forward<boost::asio::ip::tcp::socket>(other);
+		}
+		
 		socket_impl::socket_impl(error_code& err, const endpoint& endpoint,
-				bool enableHeader) :
-			socket(enableHeader),
+				bool enableHeader) : socket(enableHeader),
 			sock(*default_io_context()) {
 				sock.connect(*endpoint.get_tcp(), err);
 		}

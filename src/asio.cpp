@@ -89,6 +89,16 @@ namespace net {
 		return endpoint(new boost::asio::ip::udp::endpoint(
 				boost::asio::ip::make_address(ip), port));
 	}
+	endpoint endpoint::make_local_tcp(uint16_t port) {
+		return endpoint(
+				new boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v6(),
+					port));
+	}
+	endpoint endpoint::make_local_udp(uint16_t port) {
+		return endpoint(
+				new boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v6(),
+					port));
+	}
 	
 	endpoint::endpoint(boost::asio::ip::tcp::endpoint* endp) :
 		tcp(endp), type(TCP) {}

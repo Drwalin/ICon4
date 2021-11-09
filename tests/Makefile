@@ -19,9 +19,10 @@ LIBS += -lpthread -lboost_system -lssl -lcrypto
 
 INCLUDE = -I../src/
 CXXFLAGS += $(INCLUDE)
-OBJECTS=bin/socket.o bin/asio.o bin/tcp.o
+OBJECTS=bin/asio.o bin/socket.o bin/tcp_socket_impl.o bin/acceptor.o
+OBJECTS+=bin/tcp_acceptor_impl.o
 
-EXE = tcp_socket.exe
+EXE = tcp_socket.exe tcp_acceptor.exe
 
 all: $(EXE) $(OBJECTS)
 

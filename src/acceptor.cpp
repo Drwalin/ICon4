@@ -16,40 +16,33 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef ICON4_TCP_HPP
-#define ICON4_TCP_HPP
-
 #include <boost/asio.hpp>
 
-#include "asio.hpp"
-#include "socket.hpp"
+#include "acceptor.hpp"
+
+#include "tcp_acceptor_impl.hpp"
 
 namespace net {
-	namespace tcp {
-		class socket_impl : public socket {
-		public:
-			socket_impl(error_code& err, const endpoint& endpoint,
-					bool enableHeader);
-			virtual ~socket_impl() override;
-			
-			virtual bool is_open() const override;
-			virtual void close() override;
+	acceptor* acceptor::make_tcp(error_code& err, const endpoint& endpoint,
+			bool enableHeader) {
+		return new tcp::acceptor_impl(err, endpoint, enableHeader);
+	}
 
-			virtual size_t read_some_raw(void* buffer, size_t bytes,
-					error_code& err) override;
+	acceptor::~acceptor() {
+	}
 
-		protected:
-			virtual error_code internal_send(const void* buffer,
-					size_t bytes) override;
+	void acceptor::set_on_error(
+			std::function<bool(acceptor*, const error_code&)> callback) {
+		on_error_callback = std::bind(callback, this, std::placeholders::_1);
+	}
+	
+	void acceptor::set_on_accept(
+			std::function<void(acceptor*, socket*)> callback) {
+		on_accept_callback = callback;
+	}
 
-			virtual void async_receive() override;
-
-		protected:
-			
-			boost::asio::ip::tcp::socket sock;
-		};
+	acceptor::acceptor(bool enableHeader) :
+		enableHeader(enableHeader) {
 	}
 }
-
-#endif
 

@@ -67,6 +67,8 @@ namespace net {
 		
 		static endpoint make_tcp(const char* ip, uint16_t port);
 		static endpoint make_udp(const char* ip, uint16_t port);
+		static endpoint make_local_tcp(uint16_t port);
+		static endpoint make_local_udp(uint16_t port);
 		
 		static endpoint resolve_any_udp(const char* address, const char* service);
 		static endpoint resolve_any_tcp(const char* address, const char* service);
