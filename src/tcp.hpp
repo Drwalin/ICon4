@@ -16,35 +16,37 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#ifndef ICON4_TCP_HPP
+#define ICON4_TCP_HPP
+
 #include <boost/asio.hpp>
-#include <mutex>
 
-#include "ASIO.hpp"
+#include "asio.hpp"
+#include "socket.hpp"
 
-boost::asio::io_context& IoContext() {
-	static std::mutex mutex;
-	static boost::asio::io_context* ioContext = NULL;
-	std::lock_guard<std::mutex> lock(mutex);
-	if(ioContext == NULL)
-		ioContext = new boost::asio::io_context;
-	return *ioContext;
-}
+namespace net {
+	namespace tcp {
+		class socket_impl : public socket {
+		public:
+			socket_impl(error_code& err, const endpoint& endpoint,
+					bool enableHeader);
+			virtual ~socket_impl() override;
 
-void IoContextPollOne() {
-	boost::system::error_code err;
-	IoContext().poll_one(err);
-	if(err) {
-		printf(" boost::asio::io_context::poll_one() error: %s\n",
-				err.message().c_str());
+			virtual bool is_open() const override;
+			virtual void close() override;
+
+		protected:
+			virtual error_code internal_send(const void* buffer,
+					size_t bytes) override;
+
+			virtual void async_receive() override;
+
+		protected:
+			
+			boost::asio::ip::tcp::socket sock;
+		};
 	}
 }
 
-void IoContextPoll() {
-	boost::system::error_code err;
-	IoContext().poll(err);
-	if(err) {
-		printf(" boost::asio::io_context::poll() error: %s\n",
-				err.message().c_str());
-	}
-}
+#endif
 

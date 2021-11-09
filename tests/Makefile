@@ -19,16 +19,19 @@ LIBS += -lpthread -lboost_system -lssl -lcrypto
 
 INCLUDE = -I../src/
 CXXFLAGS += $(INCLUDE)
-OBJECTS=bin/Socket.o bin/Listener.o bin/ASIO.o
+OBJECTS=bin/socket.o bin/asio.o bin/tcp.o
 
-EXE = CompilationTest.exe
+EXE = tcp_socket.exe
 
 all: $(EXE) $(OBJECTS)
 
-%.exe: %.cpp $(OBJECTS)
+%.exe: bin/%.o $(OBJECTS)
 	$(CXX) -o $@ $^ $(CXXFLAGS) $(LIBS)
 
 bin/%.o: ../src/%.cpp
+	$(CXX) -c -o $@ $^ $(CXXFLAGS)
+
+bin/%.o: %.cpp
 	$(CXX) -c -o $@ $^ $(CXXFLAGS)
 
 .PHONY: clean
