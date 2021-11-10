@@ -4,6 +4,18 @@
 #include <acceptor.hpp>
 #include <asio.hpp>
 
+const std::string response_header =
+"HTTP/1.1 200 OK\r\n"
+"Content-Type: text/html; charset=UTF-8\r\n"
+"Content-Length: ";
+
+const std::string response_body =
+"\r\n\r\n<!doctypee html><html><head><title>Exapmle server</title><meta charset=\"utf-8\" /></head>"
+"<body><div><h1>Example head</h1><p>Example body</p></div></body>";
+
+const std::string response = response_header
++ std::to_string(response_body.size()-2) + response_body;
+
 bool on_error(net::socket* socket, const boost::system::error_code& err) {
 	printf(" Error with socket: '%s'\n", err.message().c_str());
 	if(err == boost::asio::error::bad_descriptor) {
@@ -33,11 +45,10 @@ void on_accept(net::acceptor* acceptor, net::socket* socket) {
 			printf(" received: ");
 			fwrite(data, 1, bytes, stdout);
 			if(std::string((char*)data, bytes).find("\n\r\n") != std::string::npos) {
+				socket->send(response.data(), response.size());
 				socket->close();
 			}
 			});
-	std::string msg = "{'taki_tam': 'kod'}";
-	socket->send(msg.data(), msg.size());
 }
 
 int main() {
