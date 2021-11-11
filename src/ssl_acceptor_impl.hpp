@@ -16,22 +16,24 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef ICON4_TCP_ACCEPTOR_IMPL_HPP
-#define ICON4_TCP_ACCEPTOR_IMPL_HPP
+#ifndef ICON4_SSL_ACCEPTOR_IMPL_HPP
+#define ICON4_SSL_ACCEPTOR_IMPL_HPP
 
 #include <boost/asio.hpp>
 
 #include "asio.hpp"
 #include "socket.hpp"
 #include "acceptor.hpp"
-#include "tcp_socket_impl.hpp"
+#include "ssl_socket_impl.hpp"
 
 namespace net {
-	namespace tcp {
+	namespace ssl {
 		class acceptor_impl : public acceptor {
 		public:
 			acceptor_impl(error_code& err, const endpoint& endpoint,
-				bool enable_header);
+				bool enable_header, const char* certChainFile,
+				const char* privateKeyFile, const char* dhFile,
+				const char* password);
 
 			virtual ~acceptor_impl();
 
@@ -48,12 +50,18 @@ namespace net {
 			virtual void accept_next() override;
 			
 			void internal_on_accept(socket_impl* sock, const error_code& err);
+			
+			std::string on_request_password(size_t max_length,
+					boost::asio::ssl::context::password_purpose purpose);
 
 		protected:
 
 			std::function<void(const error_code&, boost::asio::ip::tcp::socket)>
 				on_accept_internal_callback;
 			boost::asio::ip::tcp::acceptor asio_acceptor;
+			
+			boost::asio::ssl::context ssl_context;
+			std::string password;
 		};
 	}
 }

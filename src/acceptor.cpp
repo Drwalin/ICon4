@@ -21,11 +21,20 @@
 #include "acceptor.hpp"
 
 #include "tcp_acceptor_impl.hpp"
+#include "ssl_acceptor_impl.hpp"
 
 namespace net {
 	acceptor* acceptor::make_tcp(error_code& err, const endpoint& endpoint,
-			bool enableHeader) {
-		return new tcp::acceptor_impl(err, endpoint, enableHeader);
+			bool enable_header) {
+		return new tcp::acceptor_impl(err, endpoint, enable_header);
+	}
+	
+	acceptor* acceptor::make_ssl(error_code& err, const endpoint& endpoint,
+			bool enable_header, const char* certChainFile,
+				const char* privateKeyFile, const char* dhFile,
+				const char* password) {
+		return new ssl::acceptor_impl(err, endpoint, enable_header,
+				certChainFile, privateKeyFile, dhFile, password);
 	}
 
 	acceptor::~acceptor() {
@@ -41,8 +50,8 @@ namespace net {
 		on_accept_callback = callback;
 	}
 
-	acceptor::acceptor(bool enableHeader) :
-		enableHeader(enableHeader) {
+	acceptor::acceptor(bool enable_header) :
+		enable_header(enable_header) {
 	}
 }
 

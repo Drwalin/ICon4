@@ -30,16 +30,17 @@ namespace net {
 		inline const static size_t MAX_BUFFER_SIZE = 64*1024;
 
 		static socket* make_tcp(error_code& err, const endpoint& endpoint,
-				bool enableHeader);
+				bool enable_header);
 		static socket* make_ssl(error_code& err, const endpoint& endpoint,
-				bool enableHeader, const char* certFile);
+				bool enable_header, const char* certFile);
 		static socket* make_udp(error_code& err, const endpoint& endpoint);
 
 		virtual ~socket();
 
 		error_code send(const void* buffer, size_t bytes);
 		size_t read_raw(void* buffer, size_t bytes, error_code& err);
-		virtual size_t read_some_raw(void* buffer, size_t bytes, error_code& err)=0;
+		virtual size_t read_some_raw(void* buffer, size_t bytes,
+				error_code& err)=0;
 
 		virtual void set_on_receive(
 				std::function<void(socket*, void*, size_t)> callback);
@@ -50,15 +51,16 @@ namespace net {
 
 		virtual bool is_open() const=0;
 		virtual void close()=0;
+		virtual void cancel()=0;
 
 	protected:
-		socket(bool enableHeader);
+		socket(bool enable_header);
 
 		void internal_receive_with_header_callback(const error_code& err,
 				size_t bytes);
 		void internal_receive_without_header_callback(const error_code& err,
 				size_t bytes);
-		virtual error_code internal_send(const void* buffer, size_t bytes) =0;
+		virtual error_code internal_send(const void* buffer, size_t bytes)=0;
 
 		virtual void async_receive()=0;
 
@@ -71,7 +73,7 @@ namespace net {
 		std::vector<uint8_t> buffer;
 		size_t received;
 		void* user_ptr;
-		const bool enableHeader;
+		const bool enable_header;
 	};
 }
 

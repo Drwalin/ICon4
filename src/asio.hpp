@@ -24,6 +24,7 @@
 
 #include <boost/system/error_code.hpp>
 #include <boost/asio/error.hpp>
+#include <boost/asio/ssl/error.hpp>
 
 namespace boost {
 	namespace asio {

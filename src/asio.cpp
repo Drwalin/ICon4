@@ -103,7 +103,7 @@ namespace net {
 	endpoint::endpoint(boost::asio::ip::tcp::endpoint* endp) :
 		tcp(endp), type(TCP) {}
 	endpoint::endpoint(boost::asio::ip::udp::endpoint* endp) :
-		udp(endp), type(TCP) {}
+		udp(endp), type(UDP) {}
 		
 	boost::asio::ip::tcp::endpoint* endpoint::get_tcp() {
 		if(type == TCP)

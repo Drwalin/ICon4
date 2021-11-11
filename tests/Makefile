@@ -19,18 +19,20 @@ LIBS += -lpthread -lboost_system -lssl -lcrypto
 
 INCLUDE = -I../src/
 CXXFLAGS += $(INCLUDE)
-OBJECTS=bin/asio.o bin/socket.o bin/tcp_socket_impl.o bin/acceptor.o
-OBJECTS+=bin/tcp_acceptor_impl.o
+OBJECTS =bin/asio.o bin/socket.o bin/acceptor.o
+OBJECTS+=bin/tcp_socket_impl.o bin/tcp_acceptor_impl.o
+OBJECTS+=bin/ssl_socket_impl.o bin/ssl_acceptor_impl.o
 
-EXE = tcp_socket.exe tcp_acceptor.exe
+EXE = tcp_socket.exe tcp_acceptor.exe ssl_acceptor_socket.exe ssl_acceptor.exe ssl_socket.exe
+EXE_OBJ = bin/tcp_socket.o bin/tcp_acceptor.o bin/ssl_acceptor_socket.o bin/ssl_acceptor.o bin/ssl_socket.o
 
-all: $(EXE) $(OBJECTS)
+all: $(EXE_OBJ) $(OBJECTS) $(EXE)
 
 %.exe: bin/%.o $(OBJECTS)
 	$(CXX) -o $@ $^ $(CXXFLAGS) $(LIBS)
 
-bin/%.o: ../src/%.cpp
-	$(CXX) -c -o $@ $^ $(CXXFLAGS)
+bin/%.o: ../src/%.cpp ../src/%.cpp
+	$(CXX) -c -o $@ $< $(CXXFLAGS)
 
 bin/%.o: %.cpp
 	$(CXX) -c -o $@ $^ $(CXXFLAGS)

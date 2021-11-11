@@ -16,44 +16,43 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef ICON4_TCP_ACCEPTOR_IMPL_HPP
-#define ICON4_TCP_ACCEPTOR_IMPL_HPP
+#ifndef ICON4_SSL_SOCKET_IMPL_HPP
+#define ICON4_SSL_SOCKET_IMPL_HPP
 
 #include <boost/asio.hpp>
+#include <boost/asio/ssl.hpp>
 
 #include "asio.hpp"
 #include "socket.hpp"
-#include "acceptor.hpp"
-#include "tcp_socket_impl.hpp"
 
 namespace net {
-	namespace tcp {
-		class acceptor_impl : public acceptor {
+	namespace ssl {
+		class socket_impl : public socket {
 		public:
-			acceptor_impl(error_code& err, const endpoint& endpoint,
-				bool enable_header);
-
-			virtual ~acceptor_impl();
-
+			socket_impl(bool enable_header,
+					boost::asio::ssl::context& ssl_context);
+			socket_impl(error_code& err, const endpoint& endpoint,
+					bool enable_header, boost::asio::ssl::context& ssl_context);
+			virtual ~socket_impl() override;
+			
 			virtual bool is_open() const override;
 			virtual void close() override;
 			virtual void cancel() override;
 
-			virtual void set_on_accept(
-					std::function<void(acceptor*, socket*)> callback) override;
-			virtual void start_listening() override;
+			virtual size_t read_some_raw(void* buffer, size_t bytes,
+					error_code& err) override;
 
-		protected:
-
-			virtual void accept_next() override;
+			friend class acceptor_impl;
 			
-			void internal_on_accept(socket_impl* sock, const error_code& err);
+		protected:
+			virtual error_code internal_send(const void* buffer,
+					size_t bytes) override;
+
+			virtual void async_receive() override;
 
 		protected:
-
-			std::function<void(const error_code&, boost::asio::ip::tcp::socket)>
-				on_accept_internal_callback;
-			boost::asio::ip::tcp::acceptor asio_acceptor;
+			
+			boost::asio::ssl::stream<boost::asio::ip::tcp::socket> sock;
 		};
 	}
 }

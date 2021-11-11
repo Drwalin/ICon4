@@ -16,14 +16,29 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "tcp_acceptor_impl.hpp"
+#include "ssl_acceptor_impl.hpp"
 
 namespace net {
-	namespace tcp {
+	namespace ssl {
 		acceptor_impl::acceptor_impl(error_code& err, const endpoint& endpoint,
-			bool enable_header) : acceptor(enable_header),
-			asio_acceptor(*default_io_context(), *endpoint.get_tcp()) {
-			asio_acceptor.listen(16, err);
+			bool enable_header, const char* certChainFile,
+			const char* privateKeyFile, const char* dhFile,
+			const char* password) : acceptor(enable_header),
+			asio_acceptor(*default_io_context(), *endpoint.get_tcp()),
+			ssl_context(boost::asio::ssl::context::tlsv13) {
+				this->password = password;
+			ssl_context.set_options(
+					boost::asio::ssl::context::default_workarounds
+					| boost::asio::ssl::context::no_sslv2
+					| boost::asio::ssl::context::single_dh_use);
+			ssl_context.set_password_callback(
+					std::bind(&acceptor_impl::on_request_password, this,
+						std::placeholders::_1, std::placeholders::_2));
+			ssl_context.use_certificate_chain_file(certChainFile);
+			ssl_context.use_private_key_file(privateKeyFile,
+					boost::asio::ssl::context::pem);
+			ssl_context.use_tmp_dh_file(dhFile);
+				asio_acceptor.listen(256, err);
 		}
 
 		acceptor_impl::~acceptor_impl() {
@@ -53,8 +68,8 @@ namespace net {
 		}
 
 		void acceptor_impl::accept_next() {
-			socket_impl* sock = new socket_impl(enable_header);
-			asio_acceptor.async_accept(sock->sock,
+			socket_impl* sock = new socket_impl(enable_header, ssl_context);
+			asio_acceptor.async_accept(sock->sock.lowest_layer(),
 					std::bind(&acceptor_impl::internal_on_accept, this, sock,
 						std::placeholders::_1));
 		}
@@ -66,9 +81,22 @@ namespace net {
 				if(!on_error_callback(err))
 					return;
 			} else {
-				on_accept_callback(this, sock);
+				error_code error;
+				sock->sock.handshake(boost::asio::ssl::stream_base::server,
+						error);
+				if(error) {
+					on_error_callback(error);
+					delete sock;
+				} else {
+					on_accept_callback(this, sock);
+				}
 			}
 			accept_next();
+		}
+		
+		std::string acceptor_impl::on_request_password(size_t max_length,
+				boost::asio::ssl::context::password_purpose purpose) {
+			return password;
 		}
 	}
 }

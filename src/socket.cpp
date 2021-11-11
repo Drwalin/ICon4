@@ -17,6 +17,7 @@
  */
 
 #include <boost/asio.hpp>
+#include <boost/asio/ssl.hpp>
 
 #include "socket.hpp"
 
@@ -25,6 +26,7 @@
 #include <functional>
 
 #include "tcp_socket_impl.hpp"
+#include "ssl_socket_impl.hpp"
 
 namespace net {
 	
@@ -51,7 +53,7 @@ namespace net {
 	error_code socket::send(const void* buffer, size_t bytes) {
 		if(bytes > MAX_BUFFER_SIZE)
 			return boost::asio::error::invalid_argument;
-		if(enableHeader) {
+		if(enable_header) {
 			net_byte_order_impl b;
 			b.set(bytes-1);
 			error_code err = internal_send(b.b, 2);
@@ -77,7 +79,7 @@ namespace net {
 	void socket::set_on_receive(
 			std::function<void(socket*, void*, size_t)> callback) {
 		on_receive_callback = callback;
-		if(enableHeader) {
+		if(enable_header) {
 			buffer.resize(2);
 		} else {
 			buffer.resize(MAX_BUFFER_SIZE);
@@ -91,13 +93,13 @@ namespace net {
 		on_error_callback = std::bind(callback, this, std::placeholders::_1);
 	}
 	
-	socket::socket(bool enableHeader) :
+	socket::socket(bool enable_header) :
 		on_receive_internal_callback(std::bind(
-					enableHeader ?
+					enable_header ?
 					&socket::internal_receive_with_header_callback :
 					&socket::internal_receive_without_header_callback, this,
 					std::placeholders::_1, std::placeholders::_2)),
-		enableHeader(enableHeader) {
+		enable_header(enable_header) {
 		received = 0;
 		user_ptr = NULL;
 	}
@@ -107,24 +109,24 @@ namespace net {
 		if(err) {
 			received = 0;
 			buffer.resize(2);
-			if(on_error_callback(err))
-				async_receive();
-			return;
+			if(!on_error_callback(err))
+				return;
 		}
-		received += bytes;
-		if(received == buffer.size()) {
-			if(buffer.size() == 2) {
-				size_t size = net_byte_order_impl::read(&(buffer[0]))+1;
-				buffer.resize(size+2);
-			} else if(buffer.size() > 2) {
-				on_receive_callback(this, &(buffer[2]), buffer.size()-2);
-				received = 0;
-				buffer.resize(2);
-			} else {
-				received = 0;
-				buffer.resize(2);
-				if(on_error_callback(boost::asio::error::fault))
-					async_receive();
+		if(bytes) {
+			received += bytes;
+			if(received == buffer.size()) {
+				if(buffer.size() == 2) {
+					size_t size = net_byte_order_impl::read(&(buffer[0]))+1;
+					buffer.resize(size+2);
+				} else if(buffer.size() > 2) {
+					on_receive_callback(this, &(buffer[2]), buffer.size()-2);
+					received = 0;
+					buffer.resize(2);
+				} else {
+					received = 0;
+					buffer.resize(2);
+					on_error_callback(boost::asio::error::fault);
+				}
 			}
 		}
 		async_receive();
@@ -133,19 +135,35 @@ namespace net {
 	void socket::internal_receive_without_header_callback(const error_code& err,
 			size_t bytes) {
 		if(err) {
-			if(on_error_callback(err))
+			if(!on_error_callback(err)) {
+				if(bytes)
+					on_receive_callback(this, &(buffer[0]), bytes);
 				async_receive();
+			}
 			return;
+		} else {
+			on_receive_callback(this, &(buffer[0]), bytes);
+			async_receive();
 		}
-		on_receive_callback(this, &(buffer[0]), bytes);
-		async_receive();
 	}
 	
 	
 	
 	socket* socket::make_tcp(error_code& err, const endpoint& endpoint,
-			bool enableHeader) {
-		socket* sock = new tcp::socket_impl(err, endpoint, enableHeader);
+			bool enable_header) {
+		socket* sock = new tcp::socket_impl(err, endpoint, enable_header);
+		if(!err)
+			return sock;
+		delete sock;
+		return NULL;
+	}
+	
+	socket* socket::make_ssl(error_code& err, const endpoint& endpoint,
+			bool enable_header, const char* certFile) {
+		boost::asio::ssl::context ssl_context(
+				boost::asio::ssl::context::tlsv13);
+		socket* sock = new ssl::socket_impl(err, endpoint, enable_header,
+				ssl_context);
 		if(!err)
 			return sock;
 		delete sock;

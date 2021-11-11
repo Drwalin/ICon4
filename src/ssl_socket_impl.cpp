@@ -18,23 +18,30 @@
 
 #include <boost/asio.hpp>
 
-#include "tcp_socket_impl.hpp"
+#include "ssl_socket_impl.hpp"
 
 #include <utility>
 
 #include "asio.hpp"
-#include "socket.hpp"
 
 namespace net {
-	namespace tcp {
-		socket_impl::socket_impl(bool enable_header) :socket(enable_header),
-			sock(*default_io_context()) {
+	namespace ssl {
+		socket_impl::socket_impl(bool enable_header,
+				boost::asio::ssl::context& ssl_context) : socket(enable_header),
+			sock(*default_io_context(), ssl_context) {
 		}
 		
 		socket_impl::socket_impl(error_code& err, const endpoint& endpoint,
-				bool enable_header) : socket(enable_header),
-			sock(*default_io_context()) {
-				sock.connect(*endpoint.get_tcp(), err);
+				bool enable_header, boost::asio::ssl::context& ssl_context) :
+			socket(enable_header), sock(*default_io_context(), ssl_context) {
+				sock.lowest_layer().connect(*endpoint.get_tcp(), err);
+				if(err)
+					return;
+				sock.handshake(boost::asio::ssl::stream_base::client, err);
+				if(err) {
+					close();
+					return;
+				}
 		}
 		
 		socket_impl::~socket_impl() {
@@ -42,18 +49,18 @@ namespace net {
 		}
 
 		bool socket_impl::is_open() const {
-			return sock.is_open();
+			return sock.lowest_layer().is_open();
 		}
 		
 		void socket_impl::close() {
 			cancel();
 			error_code err;
-			sock.close(err);
+			sock.next_layer().close(err);
 		}
 		
 		void socket_impl::cancel() {
 			error_code err;
-			sock.cancel(err);
+			sock.next_layer().cancel(err);
 		}
 		
 		size_t socket_impl::read_some_raw(void* buffer, size_t bytes,

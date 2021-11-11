@@ -30,9 +30,9 @@ namespace net {
 	public:
 
 		static acceptor* make_tcp(error_code& err, const endpoint& endpoint,
-				bool enableHeader);
+				bool enable_header);
 		static acceptor* make_ssl(error_code& err, const endpoint& endpoint,
-				bool enableHeader, const char* certChainFile,
+				bool enable_header, const char* certChainFile,
 				const char* privateKeyFile, const char* dhFile,
 				const char* password);
 
@@ -43,6 +43,7 @@ namespace net {
 
 		virtual bool is_open() const=0;
 		virtual void close()=0;
+		virtual void cancel()=0;
 		
 		void set_on_error(
 				std::function<bool(acceptor*, const error_code&)> callback);
@@ -51,7 +52,7 @@ namespace net {
 		virtual void start_listening()=0;
 
 	protected:
-		acceptor(bool enableHeader);
+		acceptor(bool enable_header);
 		
 		virtual void accept_next()=0;
 
@@ -60,7 +61,7 @@ namespace net {
 		std::function<bool(const error_code&)> on_error_callback;
 		std::function<void(acceptor*, socket*)> on_accept_callback;
 		void* user_ptr;
-		const bool enableHeader;
+		const bool enable_header;
 	};
 }
 

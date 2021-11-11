@@ -28,20 +28,20 @@ namespace net {
 	namespace tcp {
 		class socket_impl : public socket {
 		public:
-			socket_impl(bool enableHeader);
-			socket_impl(boost::asio::ip::tcp::socket other,
-					bool enableHeader);
+			socket_impl(bool enable_header);
 			socket_impl(error_code& err, const endpoint& endpoint,
-					bool enableHeader);
+					bool enable_header);
 			virtual ~socket_impl() override;
 			
 			virtual bool is_open() const override;
 			virtual void close() override;
+			virtual void cancel() override;
 
 			virtual size_t read_some_raw(void* buffer, size_t bytes,
 					error_code& err) override;
 
 			friend class acceptor_impl;
+			
 		protected:
 			virtual error_code internal_send(const void* buffer,
 					size_t bytes) override;
