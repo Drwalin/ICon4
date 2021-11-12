@@ -1,10 +1,16 @@
 
 include ../MakefileSTD/MakefileSTD
 
-
 CXX = g++
-CXXFLAGS = -Ofast -pipe -std=c++20 -pedantic -Wall
+CXXFLAGS = -Ofast -flto -pipe -std=c++20 -pedantic -Wall
 LIBS=
+
+ifeq ($(DEBUG),1)
+	CXXFLAGS += -ggdb -g -pg
+else
+	DEBUG=0
+	CXXFLAGS += -Ofast -s
+endif
 
 ifeq ($(platform),win)
 	LIBS += -lzlib
@@ -19,16 +25,13 @@ LIBS += -lpthread -lboost_system -lssl -lcrypto
 
 INCLUDE = -I../src/
 CXXFLAGS += $(INCLUDE)
-OBJECTS =bin/asio.o bin/socket.o bin/acceptor.o
-OBJECTS+=bin/tcp_socket_impl.o bin/tcp_acceptor_impl.o
-OBJECTS+=bin/ssl_socket_impl.o bin/ssl_acceptor_impl.o
 
 EXE = tcp_socket.exe tcp_acceptor.exe ssl_acceptor_socket.exe ssl_acceptor.exe ssl_socket.exe
 EXE_OBJ = bin/tcp_socket.o bin/tcp_acceptor.o bin/ssl_acceptor_socket.o bin/ssl_acceptor.o bin/ssl_socket.o
 
-all: $(EXE_OBJ) $(OBJECTS) $(EXE)
+all: $(EXE_OBJ) $(EXE) ../libicon4.a
 
-%.exe: bin/%.o $(OBJECTS)
+%.exe: bin/%.o ../libicon4.a
 	$(CXX) -o $@ $^ $(CXXFLAGS) $(LIBS)
 
 bin/%.o: ../src/%.cpp ../src/%.cpp
@@ -37,7 +40,11 @@ bin/%.o: ../src/%.cpp ../src/%.cpp
 bin/%.o: %.cpp
 	$(CXX) -c -o $@ $^ $(CXXFLAGS)
 
+../libicon4.a:
+	(cd .. ; make DEBUG=$(DEBUG))
+
 .PHONY: clean
 clean:
+	(cd .. ; make clean)
 	$(RM) *.exe *.o bin/*.o
 
