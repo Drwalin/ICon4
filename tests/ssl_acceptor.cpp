@@ -5,14 +5,20 @@
 
 const uint16_t PORT = 8437;
 
+std::mutex mutex;
 std::vector<net::socket*> socket_to_kill;
+#define LOCK() std::lock_guard<std::mutex> ___lock(mutex)
+#include <atomic>
+
+std::atomic<size_t> sockets_count = 0;
 
 bool on_error_socket(net::socket* socket, const boost::system::error_code& err) {
-	printf(" Error with socket: '%s'\n", err.message().c_str());
+// 	printf(" Error with socket: '%s'\n", err.message().c_str());
 	if(err == boost::asio::error::bad_descriptor ||
 			err == boost::asio::error::connection_reset) {
 // 		try {
 			socket->cancel();
+			LOCK();
 			socket_to_kill.emplace_back(socket);
 // 		} catch(std::exception& e) {
 // 			fprintf(stderr, " exception 1: %s\n", e.what());
@@ -22,6 +28,7 @@ bool on_error_socket(net::socket* socket, const boost::system::error_code& err) 
 	if(err == boost::asio::error::eof) {
 // 		try {
 			socket->cancel();
+			LOCK();
 			socket_to_kill.emplace_back(socket);
 // 		} catch(std::exception& e) {
 // 			fprintf(stderr, " exception 2: %s\n", e.what());
@@ -31,6 +38,7 @@ bool on_error_socket(net::socket* socket, const boost::system::error_code& err) 
 	if(err == boost::asio::ssl::error::stream_truncated) {
 // 		try {
 			socket->cancel();
+			LOCK();
 			socket_to_kill.emplace_back(socket);
 // 		} catch(std::exception& e) {
 // 			fprintf(stderr, " exception 3: %s\n", e.what());
@@ -42,7 +50,7 @@ bool on_error_socket(net::socket* socket, const boost::system::error_code& err) 
 
 bool on_error_acceptor(net::acceptor* acceptor,
 		const boost::system::error_code& err) {
-	printf(" Error with acceptor: '%s'\n", err.message().c_str());
+	printf(" Error with acceptor: '%s', sockets count: %lu\n", err.message().c_str(), sockets_count.load());
 	if(err == boost::asio::error::eof) {
 // 		try {
 			net::stop();
@@ -55,22 +63,27 @@ bool on_error_acceptor(net::acceptor* acceptor,
 }
 
 void on_accept(net::acceptor* acceptor, net::socket* socket) {
+	printf("new socket");
+	{
+			LOCK();
 	for(net::socket* sock : socket_to_kill) {
 // 		try {
 // 			printf(" delete ...\n");
 			if(sock == socket)
 				socket = NULL;
-			sock->cancel();
 			sock->close();
 			delete sock;
+			--sockets_count;
 // 		} catch(std::exception& e) {
 // 			fprintf(stderr, " exception 5: %s\n", e.what());
 // 		}
 	}
 	socket_to_kill.clear();
+	}
 	if(socket == NULL)
 		return;
 // 	printf(" Accepted new socket!\n");
+	++sockets_count;
 	socket->set_on_error(on_error_socket);
 	socket->set_on_receive([](net::socket*socket, void*data, size_t bytes)
 			{
@@ -91,11 +104,11 @@ int main() {
 	acceptor->set_on_accept(on_accept);
 	acceptor->set_on_error(on_error_acceptor);
 	acceptor->start_listening();
-	try {
+// 	try {
 		net::run();
-	} catch(std::exception& e) {
-		fprintf(stderr, " exception 6: %s\n", e.what());
-	}
+// 	} catch(std::exception& e) {
+// 		fprintf(stderr, " exception 6: %s\n", e.what());
+// 	}
 	return 0;
 }
 

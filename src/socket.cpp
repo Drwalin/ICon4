@@ -109,7 +109,9 @@ namespace net {
 		if(err) {
 			received = 0;
 			buffer.resize(2);
-			if(!on_error_callback(err))
+			if(!on_error_callback)
+				return;
+			if(!(on_error_callback(err)))
 				return;
 		}
 		if(bytes) {
@@ -125,7 +127,8 @@ namespace net {
 				} else {
 					received = 0;
 					buffer.resize(2);
-					on_error_callback(boost::asio::error::fault);
+					if(on_error_callback)
+						on_error_callback(boost::asio::error::fault);
 				}
 			}
 		}
@@ -135,10 +138,12 @@ namespace net {
 	void socket::internal_receive_without_header_callback(const error_code& err,
 			size_t bytes) {
 		if(err) {
-			if(!on_error_callback(err)) {
-				if(bytes)
-					on_receive_callback(this, &(buffer[0]), bytes);
-				async_receive();
+			if(on_error_callback) {
+				if(on_error_callback(err)) {
+					if(bytes)
+						on_receive_callback(this, &(buffer[0]), bytes);
+					async_receive();
+				}
 			}
 			return;
 		} else {

@@ -45,6 +45,10 @@ namespace net {
 		return err;
 	}
 	
+	void reset() {
+		default_io_context()->reset();
+	}
+	
 	void stop() {
 		default_io_context()->stop();
 	}
@@ -176,6 +180,7 @@ namespace net {
 		boost::asio::ip::tcp::resolver resolver(*default_io_context());
 		error_code err;
 		auto results = resolver.resolve(address, service, err);
+		resolver.cancel();
 		if(!err)
 			for(auto r : results)
 				return endpoint(
@@ -188,6 +193,7 @@ namespace net {
 		boost::asio::ip::udp::resolver resolver(*default_io_context());
 		error_code err;
 		auto results = resolver.resolve(address, service, err);
+		resolver.cancel();
 		if(!err)
 			for(auto r : results)
 				return endpoint(
@@ -200,6 +206,7 @@ namespace net {
 		boost::asio::ip::tcp::resolver resolver(*default_io_context());
 		error_code err;
 		auto results = resolver.resolve(address, service, err);
+		resolver.cancel();
 		if(err)
 			return false;
 		for(auto r : results)
@@ -213,6 +220,7 @@ namespace net {
 		boost::asio::ip::udp::resolver resolver(*default_io_context());
 		error_code err;
 		auto results = resolver.resolve(address, service, err);
+		resolver.cancel();
 		if(err)
 			return false;
 		for(auto r : results)

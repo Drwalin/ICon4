@@ -51,11 +51,13 @@ namespace net {
 		
 		void acceptor_impl::close() {
 			cancel();
-			asio_acceptor.close();
+			error_code err;
+			asio_acceptor.close(err);
 		}
 		
 		void acceptor_impl::cancel() {
-			asio_acceptor.cancel();
+			error_code err;
+			asio_acceptor.cancel(err);
 		}
 
 		void acceptor_impl::set_on_accept(

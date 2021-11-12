@@ -3,7 +3,7 @@ include ../MakefileSTD/MakefileSTD
 
 
 CXX = g++
-CXXFLAGS = -ggdb3 -m64 -pipe -std=c++20 -pedantic -Wall
+CXXFLAGS = -Ofast -pipe -std=c++20 -pedantic -Wall
 LIBS=
 
 ifeq ($(platform),win)

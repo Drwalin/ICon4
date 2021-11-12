@@ -116,6 +116,7 @@ namespace net {
 	error_code poll_one();
 	error_code poll();
 	error_code run();
+	void reset();
 	void stop();
 }
 

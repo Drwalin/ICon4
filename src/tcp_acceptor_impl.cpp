@@ -36,11 +36,13 @@ namespace net {
 		
 		void acceptor_impl::close() {
 			cancel();
-			asio_acceptor.close();
+			error_code err;
+			asio_acceptor.close(err);
 		}
 		
 		void acceptor_impl::cancel() {
-			asio_acceptor.cancel();
+			error_code err;
+			asio_acceptor.cancel(err);
 		}
 
 		void acceptor_impl::set_on_accept(
@@ -63,7 +65,9 @@ namespace net {
 				const error_code& err) {
 			if(err) {
 				delete sock;
-				if(!on_error_callback(err))
+				if(!on_error_callback)
+					return;
+				if(!(on_error_callback(err)))
 					return;
 			} else {
 				on_accept_callback(this, sock);
