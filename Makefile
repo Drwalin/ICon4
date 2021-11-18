@@ -3,7 +3,7 @@ include MakefileSTD/MakefileSTD
 
 AR = ar
 CXX = g++
-CXXFLAGS = -flto -pipe -std=c++20 -pedantic -Wall
+CXXFLAGS = -flto -pipe -std=c++20 -pedantic -Wall -IuSockets/src
 LIBS=
 LIBFILE=libicon4.a
 
@@ -22,7 +22,7 @@ else
 	CXXFLAGS += -fPIC
 	CXXFLAGS += -I/usr/include
 endif
-LIBS += -lpthread -lboost_system -lssl -lcrypto
+LIBS += -lpthread -lssl -lcrypto
 
 INCLUDE = -I./src/
 CXXFLAGS += $(INCLUDE)
